@@ -1,10 +1,15 @@
-from pydantic import BaseModel, Field, ConfigDict
+import typing
+
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import String
-from sqlalchemy.orm import Mapped, mapped_column, composite
+from sqlalchemy.orm import Mapped, composite, mapped_column, relationship
 
 from app.user.domain.vo.location import Location
 from core.db import Base
 from core.db.mixins import TimestampMixin
+
+if typing.TYPE_CHECKING:
+    from app.audio.domain.entity.audio_file import UserAudioFile, UserRawUploadedFile
 
 
 class User(Base, TimestampMixin):
@@ -16,6 +21,13 @@ class User(Base, TimestampMixin):
     nickname: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     is_admin: Mapped[bool] = mapped_column(default=False)
     location: Mapped[Location] = composite(mapped_column("lat"), mapped_column("lng"))
+
+    raw_uploads: Mapped[list["UserRawUploadedFile"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    audio_files: Mapped[list["UserAudioFile"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
 
     @classmethod
     def create(

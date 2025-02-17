@@ -1,6 +1,6 @@
 from celery import Celery
-from core.config import config
 
+from core.config import config
 
 celery_app = Celery(
     "worker",
@@ -8,5 +8,7 @@ celery_app = Celery(
     broker=config.CELERY_BROKER_URL,
 )
 
-celery_app.conf.task_routes = {"worker.celery_worker.test_celery": "test-queue"}
+celery_app.conf.task_routes = {
+    "app.audio.input.celery_worker.audio.convert_audio": "q_convert_audio"
+}
 celery_app.conf.update(task_track_started=True)

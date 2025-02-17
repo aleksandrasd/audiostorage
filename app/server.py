@@ -3,6 +3,7 @@ from fastapi.middleware import Middleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from app.audio.adapter.input.api import router as audio_router
 from app.auth.adapter.input.api import router as auth_router
 from app.container import Container
 from app.user.adapter.input.api import router as user_router
@@ -22,8 +23,10 @@ def init_routers(app_: FastAPI) -> None:
     container = Container()
     user_router.container = container
     auth_router.container = container
+    audio_router.container = container
     app_.include_router(user_router)
     app_.include_router(auth_router)
+    app_.include_router(audio_router)
 
 
 def init_listeners(app_: FastAPI) -> None:
