@@ -1,28 +1,84 @@
-version: "3.8"
-services:
-  mysql:
-    image: mysql:8.0.33
-    container_name: fastapi-mysql
-    restart: always
-    ports:
-      - "3306:3306"
-    environment:
-      MYSQL_USER: fastapi
-      MYSQL_PASSWORD: fastapi
-      MYSQL_DATABASE: fastapi
-      MYSQL_ROOT_PASSWORD: fastapi
-      TZ: "Asia/Seoul"
-    volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-      - mysqldb:/var/lib/mysql
+version: '3.8'
 
+services:
   redis:
-    image: redis:6.2.6
-    container_name: fastapi-redis
-    command: redis-server --port 6379
-    restart: always
+    image: redis:7.4.2
+    container_name: redis
     ports:
       - "6379:6379"
+    networks:
+      - app-network
 
-volumes:
-  mysqldb:
+  minio:
+    image: quay.io/minio/minio
+    container_name: minio_app
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    networks:
+      - app-network
+
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    networks:
+      - app-network
+
+  app:
+    image: adapp:latest
+    container_name: app
+    ports:
+      - "8000:8000"
+    environment:
+      CELERY_BACKEND_URL: "db+postgresql://postgres:mysecretpassword@postgres:5432/postgres"
+      WRITER_DB_URL: "postgresql+asyncpg://postgres:mysecretpassword@postgres:5432/postgres"
+      READER_DB_URL: "postgresql+asyncpg://postgres:mysecretpassword@postgres:5432/postgres"
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      MINIO_ENDPOINT: "minio:9000"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: >
+      sh -c "poetry run python init_db.py && poetry run python -m uvicorn app.server:app --host 0.0.0.0 --port 8000"  
+    depends_on:    
+      - redis
+      - minio
+      - postgres
+    networks:
+      - app-network
+
+
+  worker:
+    image: adapp:latest
+    container_name: worker
+    environment:
+      CELERY_BACKEND_URL: "db+postgresql://postgres:mysecretpassword@postgres:5432/postgres"
+      WRITER_DB_URL: "postgresql+asyncpg://postgres:mysecretpassword@postgres:5432/postgres"
+      READER_DB_URL: "postgresql+asyncpg://postgres:mysecretpassword@postgres:5432/postgres"
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      MINIO_ENDPOINT: "minio:9000"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: >
+      sh -c "poetry run python -m celery -A celery_task worker --loglevel=INFO" 
+    depends_on:
+      - redis
+      - minio
+      - postgres
+    networks:
+      - app-network
+      
+networks:
+  app-network:
+    driver: bridge

@@ -1,7 +1,10 @@
-from contextlib import asynccontextmanager, contextmanager
+import asyncio
+from contextlib import asynccontextmanager
 from contextvars import ContextVar, Token
 from enum import Enum
-from typing import AsyncGenerator, Generator
+from functools import wraps
+from typing import AsyncGenerator
+from uuid import uuid4
 
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
@@ -9,10 +12,16 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy.orm import DeclarativeBase, Session, scoped_session, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, Session
 from sqlalchemy.sql.expression import Delete, Insert, Update
 
 from core.config import config
+
+
+class EngineType(Enum):
+    WRITER = "writer"
+    READER = "reader"
+
 
 session_context: ContextVar[str] = ContextVar("session_context")
 
@@ -27,11 +36,6 @@ def set_session_context(session_id: str) -> Token:
 
 def reset_session_context(context: Token) -> None:
     session_context.reset(context)
-
-
-class EngineType(Enum):
-    WRITER = "writer"
-    READER = "reader"
 
 
 engines = {
@@ -53,6 +57,7 @@ _async_session_factory = async_sessionmaker(
     sync_session_class=RoutingSession,
     expire_on_commit=False,
 )
+
 session = async_scoped_session(
     session_factory=_async_session_factory,
     scopefunc=get_session_context,
@@ -76,25 +81,45 @@ async def session_factory() -> AsyncGenerator[AsyncSession, None]:
         await _session.close()
 
 
-_syn_session_factory = sessionmaker(
-    class_=Session,
-    sync_session_class=RoutingSession,
-    expire_on_commit=False,
-)
-syn_session = scoped_session(
-    session_factory=_syn_session_factory,
-    scopefunc=get_session_context,
-)
+class SynFunScopedSession:
+    def __call__(self, func):
+        @wraps(func)
+        def _scoped_session(*args, **kwargs):
+            session_id = str(uuid4())
+            context = set_session_context(session_id=session_id)
+
+            try:
+                func(*args, **kwargs)
+            except Exception as e:
+                raise e
+            finally:
+                try:
+                    loop = asyncio.get_running_loop()
+                except RuntimeError:
+                    loop = asyncio.new_event_loop()
+                try:
+                    loop.run_until_complete(session.remove())
+                except Exception as e:
+                    raise e
+                finally:
+                    reset_session_context(context=context)
+
+        return _scoped_session
 
 
-@contextmanager
-def syn_session_factory() -> Generator[Session, None, None]:
-    _session = sessionmaker(
-        class_=Session,
-        sync_session_class=RoutingSession,
-        expire_on_commit=False,
-    )()
-    try:
-        yield _session
-    finally:
-        _session.close()
+class FunScopedSession:
+    def __call__(self, func):
+        @wraps(func)
+        async def _scoped_session(*args, **kwargs):
+            session_id = str(uuid4())
+            context = set_session_context(session_id=session_id)
+
+            try:
+                await func(*args, **kwargs)
+            except Exception as e:
+                raise e
+            finally:
+                await session.remove()
+                reset_session_context(context=context)
+
+        return _scoped_session

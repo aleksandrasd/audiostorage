@@ -4,6 +4,7 @@ from typing import List
 from app.audio.domain.entity.audio_file import (
     AudioFile,
     AudioFileMeta,
+    AudioFileRead,
     UserAudioFile,
     UserRawUploadedFile,
 )
@@ -11,35 +12,57 @@ from app.audio.domain.entity.audio_file import (
 
 class AudioRepo(ABC):
     @abstractmethod
-    def save_upload_music_file_record(
+    async def save_upload_audio_file_record(
         self, user_raw_uploaded_file: UserRawUploadedFile
     ) -> None:
         """save_upload_music_file_record"""
 
     @abstractmethod
-    def save_audio_file_meta(self, audio_file_meta: AudioFileMeta) -> None:
+    async def save_audio_file_meta(self, audio_file_meta: AudioFileMeta) -> None:
         """save_audio_file_meta"""
 
     @abstractmethod
-    def save_audio_file(self, audio_file: AudioFile) -> None:
+    async def save_audio_file(self, audio_file: AudioFile) -> None:
         """save_audio_file"""
 
     @abstractmethod
-    def save_user_audio_file(self, user_audio_file: UserAudioFile) -> None:
+    async def save_user_audio_file(self, user_audio_file: UserAudioFile) -> None:
         """save_audio_file"""
 
     @abstractmethod
-    def persist(self) -> None:
+    async def persist(self) -> None:
         """persist"""
 
     @abstractmethod
-    def get_audio_upload_file_max_size(self) -> int | None:
+    async def get_audio_upload_file_max_size(self) -> int | None:
         """get_audio_upload_file_max_size"""
 
     @abstractmethod
-    def get_audio_formats_for_download(self) -> List[str] | None:
+    async def get_audio_formats_for_download(self) -> List[str] | None:
         """get_audio_formats_for_download"""
 
     @abstractmethod
-    def get_raw_audio_id(name: str) -> int:
-        """get_raw_audio_id"""
+    async def download_audio_id(self, name: str) -> int:
+        """download_audio_id"""
+
+    @abstractmethod
+    async def get_file_type_by_filenames(
+        self, filename: str, original_file_name: str
+    ) -> str | None:
+        """get_file_type_by_filenames"""
+
+    @abstractmethod
+    async def files_full_text_search(self, query: str) -> List[AudioFileRead]:
+        """files_full_text_search"""
+
+    @abstractmethod
+    async def list_audio_files(
+        self, user_id: int | None = None, limit: int = 100
+    ) -> List[AudioFileRead]:
+        """list_audio_files"""
+
+    @abstractmethod
+    async def files_full_text_search(
+        self, query: str, limit: int = 100
+    ) -> List[AudioFileRead]:
+        """files_full_text_search"""

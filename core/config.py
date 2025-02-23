@@ -8,22 +8,17 @@ class Config(BaseSettings):
     DEBUG: bool = True
     APP_HOST: str = "0.0.0.0"
     APP_PORT: int = 8000
+    BUCKET_NAME: str = "audio"
     WRITER_DB_URL: (
         str
     ) = "postgresql+asyncpg://postgres:mysecretpassword@localhost:5432/postgres"
     READER_DB_URL: (
         str
     ) = "postgresql+asyncpg://postgres:mysecretpassword@localhost:5432/postgres"
-    SYN_WRITER_DB_URL: (
-        str
-    ) = "postgresql://postgres:mysecretpassword@localhost:5432/postgres"
-    SYN_READER_DB_URL: (
-        str
-    ) = "postgresql//postgres:mysecretpassword@localhost:5432/postgres"
     JWT_SECRET_KEY: str = "fastapi"
     JWT_ALGORITHM: str = "HS256"
     SENTRY_SDN: str = ""
-    CELERY_BROKER_URL: str = "redis://:password123@localhost:6379/0"
+    CELERY_BROKER_URL: str = "redis://localhost:6379/0"
     CELERY_BACKEND_URL: (
         str
     ) = "db+postgresql://postgres:mysecretpassword@localhost:5432/postgres"

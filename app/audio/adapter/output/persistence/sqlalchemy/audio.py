@@ -1,46 +1,133 @@
 from typing import List
 
-from sqlalchemy import select
+from sqlalchemy import desc, func, select
 
 from app.audio.domain.entity.audio_file import (
     AudioFile,
     AudioFileMeta,
+    AudioFileRead,
     Policy,
     UserAudioFile,
     UserRawUploadedFile,
 )
 from app.audio.domain.repository.audio import AudioRepo
+from app.user.domain.entity.user import User
 from core.db.session import session, session_factory
 
 
 class AudioSQLAlchemyRepo(AudioRepo):
-    def save_upload_music_file_record(
+    async def save_upload_audio_file_record(
         self, user_raw_uploaded_file: UserRawUploadedFile
     ) -> None:
         session.add(user_raw_uploaded_file)
 
-    def save_audio_file_meta(self, audio_file_meta: AudioFileMeta) -> None:
+    async def save_audio_file_meta(self, audio_file_meta: AudioFileMeta) -> None:
         session.add(audio_file_meta)
 
-    def save_audio_file(self, audio_file: AudioFile) -> None:
+    async def save_audio_file(self, audio_file: AudioFile) -> None:
         session.add(audio_file)
 
-    def save_user_audio_file(self, user_audio_file: UserAudioFile) -> None:
+    async def save_user_audio_file(self, user_audio_file: UserAudioFile) -> None:
         session.add(user_audio_file)
 
-    def persist(self) -> None:
-        session.flush()
+    async def persist(self) -> None:
+        await session.flush()
 
-    def get_audio_upload_file_max_size(self) -> int | None:
-        with session_factory() as read_session:
-            return read_session.query(Policy.upload_max_size_in_bytes).first()
+    async def get_audio_formats_for_download(self) -> List[str] | None:
+        async with session_factory() as read_session:
+            result = await read_session.execute(select(Policy.audio_formats_download))
+            return result.scalars().first()
 
-    def get_audio_formats_for_download(self) -> List[str] | None:
-        with session_factory() as read_session:
-            return read_session.query(Policy.audio_formats_download).first()
+    async def get_audio_upload_file_max_size(self) -> int | None:
+        async with session_factory() as read_session:
+            result = await read_session.execute(select(Policy.upload_max_size_in_bytes))
+            return result.scalars().first()
 
-    def get_raw_audio_id(name: str) -> int:
-        query = select(UserRawUploadedFile.id).where(
-            UserRawUploadedFile.file_name == name
-        )
-        return session.execute(query).scalar()
+    async def download_audio_id(self, name: str) -> int:
+        async with session_factory() as session:
+            query = select(UserRawUploadedFile.id).where(
+                UserRawUploadedFile.file_name == name
+            )
+            result = await session.execute(query)
+            return result.scalar()
+
+    async def get_file_type_by_filenames(
+        filename: str, original_file_name: str
+    ) -> str | None:
+        async with session_factory() as read_session:
+            query = (
+                select(AudioFile.file_type)
+                .join(UserAudioFile, AudioFile.id == UserAudioFile.audio_file_id)
+                .join(
+                    UserRawUploadedFile,
+                    UserAudioFile.upload_id == UserRawUploadedFile.id,
+                )
+                .where(
+                    UserAudioFile.audio_file_id == AudioFile.id,
+                    UserRawUploadedFile.original_file_name == original_file_name,
+                    AudioFile.file_name == filename,
+                )
+            )
+            result = await read_session.execute(query)
+            return result.scalars().first()
+
+    async def list_audio_files(
+        self, user_id: int | None = None, limit: int = 100
+    ) -> List[AudioFileRead]:
+        async with session_factory() as read_session:
+            s = (
+                select(
+                    UserRawUploadedFile.user_id,
+                    UserRawUploadedFile.original_file_name,
+                    AudioFile.file_name,
+                    UserRawUploadedFile.created_at,
+                    AudioFile.file_size_in_bytes,
+                    AudioFileMeta.length_in_seconds,
+                    User.nickname,
+                    AudioFile.file_type,
+                )
+                .join(UserAudioFile, UserAudioFile.upload_id == UserRawUploadedFile.id)
+                .join(AudioFile, UserAudioFile.audio_file_id == AudioFile.id)
+                .join(AudioFileMeta, AudioFile.meta_id == AudioFileMeta.id)
+                .join(User, UserRawUploadedFile.user_id == User.id)
+            )
+            if user_id:
+                s = s.where(UserRawUploadedFile.user_id == user_id)
+            s = s.order_by(desc(UserRawUploadedFile.created_at),desc(AudioFile.file_type)).limit(limit)
+            result = await read_session.execute(s)
+            return result.all()
+
+    async def files_full_text_search(
+        self, query: str, limit: int = 100
+    ) -> List[AudioFileRead]:
+        async with session_factory() as read_session:
+            # Construct the full-text search condition
+            tsquery = func.websearch_to_tsquery("simple", query)
+            tsvector = func.to_tsvector(
+                "simple", func.tokenize_filename(UserRawUploadedFile.original_file_name)
+            )
+
+            # Build the query with the full-text search condition
+            query = (
+                select(
+                    UserRawUploadedFile.user_id,
+                    UserRawUploadedFile.original_file_name,
+                    UserRawUploadedFile.file_name,
+                    UserRawUploadedFile.created_at,
+                    AudioFile.file_size_in_bytes,
+                    AudioFileMeta.length_in_seconds,
+                    User.nickname,
+                    AudioFile.file_type,
+                )
+                .join(UserAudioFile, UserAudioFile.upload_id == UserRawUploadedFile.id)
+                .join(AudioFile, UserAudioFile.audio_file_id == AudioFile.id)
+                .join(AudioFileMeta, AudioFile.meta_id == AudioFileMeta.id)
+                .join(User, UserRawUploadedFile.user_id == User.id)
+                .filter(tsvector.op("@@")(tsquery))
+                .order_by(desc(UserRawUploadedFile.created_at),desc(AudioFile.file_type))
+                .limit(limit)
+            )
+
+            # Execute the query and return the results
+            results = await read_session.execute(query)
+            return results.all()

@@ -1,10 +1,19 @@
+import os
+import shutil
 import subprocess
+import tempfile
+from uuid import uuid4
 
 from core.audio_editor import AudioMeta, ConversionStrategy
 
 
 class FFmpegWAVConversion(ConversionStrategy):
+    def __init__(self):
+        pass
+
     def convert(self, file_path: str, output_path: str, **kwargs) -> None:
+        temp_dir = tempfile.gettempdir()
+        temp_file_path = os.path.join(temp_dir, f"{str(uuid4())}.wav")
         cmd = [
             "ffmpeg",
             "-i",
@@ -16,13 +25,20 @@ class FFmpegWAVConversion(ConversionStrategy):
             "44100",
             "-ac",
             "2",
-            output_path,
+            temp_file_path,
         ]
+
         subprocess.run(cmd, check=True)
+        shutil.move(temp_file_path, output_path)
 
 
 class FFmpegMP3Conversion(ConversionStrategy):
+    def __init__(self):
+        pass
+
     def convert(self, file_path: str, output_path: str, **kwargs) -> None:
+        temp_dir = tempfile.gettempdir()
+        temp_file_path = os.path.join(temp_dir, f"{str(uuid4())}.wav")
         bitrate = kwargs.get("bitrate", "320k")
         cmd = [
             "ffmpeg",
@@ -37,9 +53,10 @@ class FFmpegMP3Conversion(ConversionStrategy):
             "44100",
             "-ac",
             "2",
-            output_path,
+            temp_file_path,
         ]
         subprocess.run(cmd, check=True)
+        shutil.move(temp_file_path, output_path)
 
 
 class FFmpegAudioMeta(AudioMeta):

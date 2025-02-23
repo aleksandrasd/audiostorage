@@ -1,17 +1,18 @@
 # app/audio/application/service/audio_service.py
+import asyncio
 import os
-
-from celery import uuid
+from typing import List
+from uuid import uuid4
 
 from app.audio.adapter.output.persistence.repository_adapter import (
     AudioBinaryAdapterRepo,
     AudioRepositoryAdapter,
 )
-from app.audio.application.exception import MissingPolicyException
 from app.audio.domain.command import ConvertAudioCommand, UploadAudioCommand
 from app.audio.domain.entity.audio_file import (
     AudioFile,
     AudioFileMeta,
+    AudioFileRead,
     UserAudioFile,
     UserRawUploadedFile,
 )
@@ -24,81 +25,97 @@ class AudioService(AudioServiceUseCase):
     def __init__(
         self,
         *,
-        repo: AudioRepositoryAdapter,
+        repository: AudioRepositoryAdapter,
         converter: AudioConverter,
         repo_binary: AudioBinaryAdapterRepo,
     ):
-        self.repository = repo
+        self.repository = repository
         self.converter = converter
         self.repo_binary = repo_binary
 
-    @Transactional()
-    def upload_audio(self, command: UploadAudioCommand) -> str:
-        new_name = str(uuid.uuid4())
-        user_raw_uploaded_file = UserRawUploadedFile.create(
-            user_id=command.user_id, file_name=new_name, original_file_name=command.name
+    async def download_audio_file(self, filename: str, output_path: str) -> None:
+        # TODO: throw exception
+        await self.repo_binary.download_audio(
+            name=filename, output_file_path=output_path
         )
-        self.repository.save_uploaded_audio_file(user_raw_uploaded_file)
-        return new_name
+
+    async def list_audio(self, user_id: int) -> List[AudioFileRead]:
+        """Convert audio"""
+
+    @Transactional()
+    async def upload_audio(self, command: UploadAudioCommand) -> str:
+        upload_name = str(uuid4())
+        await self.repo_binary.upload_audio(
+            name=upload_name, data=command.data, length=command.len
+        )
+        user_raw_uploaded_file = UserRawUploadedFile.create(
+            user_id=command.user_id,
+            file_name=upload_name,
+            original_file_name=command.name,
+        )
+        await self.repository.save_upload_audio_file_record(user_raw_uploaded_file)
+        return upload_name
 
     def _do_audio_file_conversion(self, file_name, audio_type) -> str:
         os.makedirs(audio_type, exist_ok=True)
-        out_full_path = os.path.join(audio_type, file_name)
-        try:
-            self.converter.convert(file_name, out_full_path, audio_type)
-        finally:
-            if os.path.exists(out_full_path):
-                os.remove(out_full_path)
+        out_full_path = os.path.join(audio_type, str(uuid4()))
+        self.converter.convert(file_name, out_full_path, audio_type)
         return out_full_path
+
+    async def list_audio_files(
+        self, user_id: int | None = None, limit: int = 100
+    ) -> List[AudioFileRead]:
+        return await self.repository.list_audio_files(user_id, limit)
+
+    async def files_full_text_search(
+        self, user_id: int | None, limit: int = 100
+    ) -> List[AudioFileRead]:
+        return await self.repository.files_full_text_search(user_id, limit)
 
     @Transactional()
     async def convert_audio(self, command: ConvertAudioCommand) -> str:
         file_name = command.file_name
-        download_audio_formats = self.repository.get_audio_formats_for_download()
-        if download_audio_formats is None:
-            raise MissingPolicyException(
-                (
-                    "missing information what kind of audio "
-                    "format to provide for users to download."
-                )
-            )
-        self.repo_binary.get_raw_audio(name=file_name, output_file_path=file_name)
+        download_audio_formats = ["wav", "mp3"]
+        await self.repo_binary.download_audio(
+            name=file_name, output_file_path=file_name
+        )
         length_in_seconds = int(self.converter.get_audio_duration(file_name))
-        generated_files = []
+        generated_files = [file_name]
         try:
             meta = AudioFileMeta.create(length_in_seconds=length_in_seconds)
-            self.repository.save_audio_file_meta(meta)
+            await self.repository.save_audio_file_meta(meta)
             await self.repository.persist()
 
-            for audio_format in command.audio_types:
-                fmt_file_name = self._do_audio_file_conversion(file_name, audio_format)
-
+            for audio_format in download_audio_formats:
+                fmt_file_name = await asyncio.to_thread(
+                    self._do_audio_file_conversion,
+                    file_name=file_name,
+                    audio_type=audio_format,
+                )
                 generated_files.append(fmt_file_name)
-
-                self.repo_binary.persist(
-                    name=file_name, file_path=fmt_file_name, audio_format=audio_format
+                await self.repo_binary.upload_audio_file(
+                    name=os.path.basename(fmt_file_name), 
+                    file_path=fmt_file_name
                 )
 
                 audio_file = AudioFile.create(
                     meta_id=meta.id,
-                    bucket=audio_format,
-                    file_name=file_name,
+                    file_name=os.path.basename(fmt_file_name),
                     file_type=audio_format,
-                    file_size_in_bytes=os.path.getsize(file_name),
+                    file_size_in_bytes=os.path.getsize(fmt_file_name),
                 )
-                self.repository.save_audio_file(audio_file)
-                self.repository.persist()
+                await self.repository.save_audio_file(audio_file)
+                await self.repository.persist()
 
-                # Link user and music_file
                 user_audio = UserAudioFile.create(
-                    user_id=command.user_Id,
-                    audio_file_id=audio_file.id,
-                    raw_audio_file_id=self.repository.get_upload_id_by_file_name(
+                    user_id=command.user_id,
+                    audio_file_id=str(audio_file.id),
+                    raw_audio_file_id=await self.repository.download_audio_id(
                         file_name
                     ),
                 )
-                self.repository.save_user_audio_file(user_audio)
-                self.repository.persist()
+                await self.repository.save_user_audio_file(user_audio)
+                await self.repository.persist()
         finally:
             for fn in generated_files:
                 os.remove(fn)

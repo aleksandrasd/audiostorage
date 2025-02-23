@@ -1,6 +1,6 @@
 import datetime
 import typing
-
+from sqlalchemy.dialects.postgresql import REGCONFIG
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import (
     ARRAY,
@@ -13,7 +13,9 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    cast,
     func,
+    type_coerce,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -68,6 +70,7 @@ class AudioFileMeta(Base):
 
 class AudioFile(Base):
     __tablename__ = "audio_file"
+    # Define the GIN index
 
     id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
@@ -75,7 +78,6 @@ class AudioFile(Base):
     meta_id: Mapped[int] = mapped_column(
         BigInteger, ForeignKey("audio_file_meta.id", ondelete="CASCADE"), nullable=False
     )
-    bucket: Mapped[str] = mapped_column(Text, nullable=False)
     file_name: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
     file_type: Mapped[Enum] = mapped_column(Enum("mp3", "wav", name="audio_type"))
     file_size_in_bytes: Mapped[int] = mapped_column(BigInteger)
@@ -90,14 +92,12 @@ class AudioFile(Base):
         cls,
         *,
         meta_id: int,
-        bucket: str,
         file_name: str,
         file_type: str,
         file_size_in_bytes: int,
     ) -> "AudioFile":
         return cls(
             meta_id=meta_id,
-            bucket=bucket,
             file_name=file_name,
             file_type=file_type,
             file_size_in_bytes=file_size_in_bytes,
@@ -137,9 +137,7 @@ class UserAudioFile(Base):
         cls, *, user_id: int, audio_file_id: int, raw_audio_file_id: int
     ) -> "AudioFile":
         return cls(
-            user_id=user_id,
-            audio_file_id=audio_file_id,
-            raw_audio_file_id=raw_audio_file_id,
+            user_id=user_id, audio_file_id=audio_file_id, upload_id=raw_audio_file_id
         )
 
 
@@ -153,7 +151,7 @@ class Policy(Base):
 
 
 class UserRawUploadedFileFields(BaseModel):
-    user_id: str = Field(..., title="USER ID")
+    user_id: int = Field(..., title="USER ID")
     original_file_name: str = Field(
         ..., title="Original file name (user's assigned name)"
     )
@@ -173,3 +171,4 @@ class AudioFileRead(UserRawUploadedFileFields, BaseModel):
     nickname: str = Field(..., title="User nickname")
     file_size_in_bytes: int = Field(..., title="File size")
     length_in_seconds: int = Field(..., title="Audio length in seconds")
+    file_type: str = Field(..., title="Audio format")

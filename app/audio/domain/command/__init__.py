@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -13,7 +13,6 @@ class UploadAudioCommand(BaseModel):
 class ConvertAudioCommand(BaseModel):
     user_id: int
     file_name: str
-    audio_types: List[str]
 
 
 class RemoveAudioCommand(BaseModel):
