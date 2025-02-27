@@ -93,7 +93,7 @@ class AudioService(AudioServiceUseCase):
                 )
 
                 audio_file = AudioFile.create(
-                    meta_id=meta.id,
+                    length_in_seconds=length_in_seconds,
                     file_name=os.path.basename(fmt_file_name),
                     file_type=audio_format,
                     file_size_in_bytes=os.path.getsize(fmt_file_name),

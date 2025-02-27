@@ -76,13 +76,13 @@ class AudioFile(Base):
     def create(
         cls,
         *,
-        meta_id: int,
+        length_in_seconds: int,
         file_name: str,
         file_type: str,
         file_size_in_bytes: int,
     ) -> "AudioFile":
         return cls(
-            meta_id=meta_id,
+            length_in_seconds=length_in_seconds,
             file_name=file_name,
             file_type=file_type,
             file_size_in_bytes=file_size_in_bytes,

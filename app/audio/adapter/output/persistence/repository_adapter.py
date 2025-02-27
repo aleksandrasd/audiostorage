@@ -20,6 +20,11 @@ class AudioRepositoryAdapter:
     def __init__(self, *, audio_repo: AudioRepo):
         self.audio_repo = audio_repo
 
+    async def get_raw_file_name(self, id: int) -> str:
+        return await self.audio_repo.get_raw_file_name(
+            id
+        )
+      
     async def save_upload_audio_file_record(
         self, user_raw_uploaded_file: UserRawUploadedFile
     ) -> None:

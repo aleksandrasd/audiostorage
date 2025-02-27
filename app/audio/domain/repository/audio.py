@@ -66,3 +66,7 @@ class AudioRepo(ABC):
         self, query: str, limit: int = 100
     ) -> List[AudioFileRead]:
         """files_full_text_search"""
+
+    @abstractmethod
+    async def get_raw_file_name(self, id: int) -> str:
+        """Get raw file name"""
