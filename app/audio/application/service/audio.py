@@ -1,4 +1,3 @@
-# app/audio/application/service/audio_service.py
 import asyncio
 import os
 from typing import List
@@ -43,18 +42,17 @@ class AudioService(AudioServiceUseCase):
         """Convert audio"""
 
     @Transactional()
-    async def upload_audio(self, command: UploadAudioCommand) -> str:
+    async def upload_audio(self, command: UploadAudioCommand) -> int:
         upload_name = str(uuid4())
         await self.repo_binary.upload_audio(
             name=upload_name, data=command.data, length=command.len
         )
         user_raw_uploaded_file = UserRawUploadedFile.create(
-            user_id=command.user_id,
             file_name=upload_name,
             original_file_name=command.name,
         )
-        await self.repository.save_upload_audio_file_record(user_raw_uploaded_file)
-        return upload_name
+        upload = await self.repository.save_upload_audio_file_record(user_raw_uploaded_file)
+        return upload.id
 
     def _do_audio_file_conversion(self, file_name, audio_type) -> str:
         os.makedirs(audio_type, exist_ok=True)
@@ -82,10 +80,6 @@ class AudioService(AudioServiceUseCase):
         length_in_seconds = int(self.converter.get_audio_duration(file_name))
         generated_files = [file_name]
         try:
-            meta = AudioFileMeta.create(length_in_seconds=length_in_seconds)
-            await self.repository.save_audio_file_meta(meta)
-            await self.repository.persist()
-
             for audio_format in download_audio_formats:
                 fmt_file_name = await asyncio.to_thread(
                     self._do_audio_file_conversion,

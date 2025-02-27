@@ -22,12 +22,10 @@ async def _convert_audio(
 
 
 @shared_task(name=CONVERT_AUDIO)
-def convert_audio(user_id: int, file_name: str):
-    # Create or get the event loop
+def convert_audio(user_id: int, upload_id: int):
     loop = asyncio.get_event_loop()
-    # Run the async function synchronously
     result = loop.run_until_complete(
-        _convert_audio(user_id=user_id, file_name=file_name)
+        _convert_audio(user_id=user_id, upload_id=upload_id)
     )
     return result
 

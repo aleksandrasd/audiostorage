@@ -12,7 +12,7 @@ class UploadAudioCommand(BaseModel):
 
 class ConvertAudioCommand(BaseModel):
     user_id: int
-    file_name: str
+    upload_id: int
 
 
 class RemoveAudioCommand(BaseModel):
