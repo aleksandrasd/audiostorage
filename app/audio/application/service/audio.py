@@ -72,8 +72,10 @@ class AudioService(AudioServiceUseCase):
 
     @Transactional()
     async def convert_audio(self, command: ConvertAudioCommand) -> str:
-        file_name = command.file_name
         download_audio_formats = ["wav", "mp3"]
+        file_name = await self.repository.get_raw_file_name(
+            command.user_id
+        )
         await self.repo_binary.download_audio(
             name=file_name, output_file_path=file_name
         )
@@ -104,9 +106,7 @@ class AudioService(AudioServiceUseCase):
                 user_audio = UserAudioFile.create(
                     user_id=command.user_id,
                     audio_file_id=str(audio_file.id),
-                    raw_audio_file_id=await self.repository.download_audio_id(
-                        file_name
-                    ),
+                    raw_audio_file_id=command.id,
                 )
                 await self.repository.save_user_audio_file(user_audio)
                 await self.repository.persist()
