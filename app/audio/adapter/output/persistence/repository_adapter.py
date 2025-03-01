@@ -27,7 +27,7 @@ class AudioRepositoryAdapter:
     async def save_upload_audio_file_record(
         self, user_raw_uploaded_file: UserRawUploadedFile
     ) -> None:
-        return await self.audio_repo.save_upload_audio_file_record(
+        await self.audio_repo.save_upload_audio_file_record(
             user_raw_uploaded_file
         )
 

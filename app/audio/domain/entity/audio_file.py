@@ -38,7 +38,6 @@ class UserRawUploadedFile(Base):
         DateTime, nullable=False, server_default=func.now()
     )
 
-    user: Mapped["User"] = relationship(back_populates="raw_uploads")
     audio_files: Mapped[list["UserAudioFile"]] = relationship(
         back_populates="raw_audio_file_id"
     )

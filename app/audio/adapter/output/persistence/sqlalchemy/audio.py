@@ -82,7 +82,7 @@ class AudioSQLAlchemyRepo(AudioRepo):
         async with session_factory() as read_session:
             s = (
                 select(
-                    UserRawUploadedFile.user_id,
+                    UserAudioFile.user_id,
                     UserRawUploadedFile.original_file_name,
                     AudioFile.file_name,
                     UserRawUploadedFile.created_at,
@@ -93,10 +93,10 @@ class AudioSQLAlchemyRepo(AudioRepo):
                 )
                 .join(UserAudioFile, UserAudioFile.upload_id == UserRawUploadedFile.id)
                 .join(AudioFile, UserAudioFile.audio_file_id == AudioFile.id)
-                .join(User, UserRawUploadedFile.user_id == User.id)
+                .join(User, UserAudioFile.user_id == User.id)
             )
             if user_id:
-                s = s.where(UserRawUploadedFile.user_id == user_id)
+                s = s.where(UserAudioFile.user_id == user_id)
             s = s.order_by(desc(UserRawUploadedFile.created_at),desc(AudioFile.file_type)).limit(limit)
             result = await read_session.execute(s)
             return result.all()
@@ -114,7 +114,7 @@ class AudioSQLAlchemyRepo(AudioRepo):
             # Build the query with the full-text search condition
             query = (
                 select(
-                    UserRawUploadedFile.user_id,
+                    UserAudioFile.user_id,
                     UserRawUploadedFile.original_file_name,
                     UserRawUploadedFile.file_name,
                     UserRawUploadedFile.created_at,
@@ -125,7 +125,7 @@ class AudioSQLAlchemyRepo(AudioRepo):
                 )
                 .join(UserAudioFile, UserAudioFile.upload_id == UserRawUploadedFile.id)
                 .join(AudioFile, UserAudioFile.audio_file_id == AudioFile.id)
-                .join(User, UserRawUploadedFile.user_id == User.id)
+                .join(User, UserAudioFile.user_id == User.id)
                 .filter(tsvector.op("@@")(tsquery))
                 .order_by(desc(UserRawUploadedFile.created_at),desc(AudioFile.file_type))
                 .limit(limit)

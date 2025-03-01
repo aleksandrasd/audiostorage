@@ -50,8 +50,9 @@ class AudioService(AudioServiceUseCase):
             file_name=upload_name,
             original_file_name=command.name,
         )
-        upload = await self.repository.save_upload_audio_file_record(user_raw_uploaded_file)
-        return upload.id
+        await self.repository.save_upload_audio_file_record(user_raw_uploaded_file)
+        await self.repository.persist()
+        return user_raw_uploaded_file.id
 
     def _do_audio_file_conversion(self, file_name, audio_type) -> str:
         os.makedirs(audio_type, exist_ok=True)
@@ -105,7 +106,7 @@ class AudioService(AudioServiceUseCase):
                 user_audio = UserAudioFile.create(
                     user_id=command.user_id,
                     audio_file_id=str(audio_file.id),
-                    raw_audio_file_id=command.id,
+                    raw_audio_file_id=command.upload_id,
                 )
                 await self.repository.save_user_audio_file(user_audio)
                 await self.repository.persist()
