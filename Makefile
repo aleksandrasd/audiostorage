@@ -38,7 +38,7 @@ dev_services_run:
 	docker run -d \
 		--restart unless-stopped --name $(REDIS_CONTAINER) \
 		-p 6379:6379 \
-		--restart unless-stopped
+		--restart unless-stopped \
 		redis:7.4.2 
 
 dev_services_start:
