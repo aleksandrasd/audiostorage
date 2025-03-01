@@ -4,7 +4,6 @@ from sqlalchemy import desc, func, select
 
 from app.audio.domain.entity.audio_file import (
     AudioFile,
-    AudioFileMeta,
     AudioFileRead,
     Policy,
     UserAudioFile,
@@ -20,9 +19,6 @@ class AudioSQLAlchemyRepo(AudioRepo):
         self, user_raw_uploaded_file: UserRawUploadedFile
     ) -> None:
         session.add(user_raw_uploaded_file)
-
-    async def save_audio_file_meta(self, audio_file_meta: AudioFileMeta) -> None:
-        session.add(audio_file_meta)
 
     async def save_audio_file(self, audio_file: AudioFile) -> None:
         session.add(audio_file)
@@ -42,6 +38,15 @@ class AudioSQLAlchemyRepo(AudioRepo):
         async with session_factory() as read_session:
             result = await read_session.execute(select(Policy.upload_max_size_in_bytes))
             return result.scalars().first()
+
+
+    async def get_raw_file_name(self, id: int) -> str:
+        async with session_factory() as session:
+            query = select(UserRawUploadedFile.file_name).where(
+                UserRawUploadedFile.id == id
+            )
+            result = await session.execute(query)
+            return result.scalar()
 
     async def download_audio_id(self, name: str) -> int:
         async with session_factory() as session:
@@ -77,22 +82,21 @@ class AudioSQLAlchemyRepo(AudioRepo):
         async with session_factory() as read_session:
             s = (
                 select(
-                    UserRawUploadedFile.user_id,
+                    UserAudioFile.user_id,
                     UserRawUploadedFile.original_file_name,
                     AudioFile.file_name,
                     UserRawUploadedFile.created_at,
                     AudioFile.file_size_in_bytes,
-                    AudioFileMeta.length_in_seconds,
+                    AudioFile.length_in_seconds,
                     User.nickname,
                     AudioFile.file_type,
                 )
                 .join(UserAudioFile, UserAudioFile.upload_id == UserRawUploadedFile.id)
                 .join(AudioFile, UserAudioFile.audio_file_id == AudioFile.id)
-                .join(AudioFileMeta, AudioFile.meta_id == AudioFileMeta.id)
-                .join(User, UserRawUploadedFile.user_id == User.id)
+                .join(User, UserAudioFile.user_id == User.id)
             )
             if user_id:
-                s = s.where(UserRawUploadedFile.user_id == user_id)
+                s = s.where(UserAudioFile.user_id == user_id)
             s = s.order_by(desc(UserRawUploadedFile.created_at),desc(AudioFile.file_type)).limit(limit)
             result = await read_session.execute(s)
             return result.all()
@@ -110,19 +114,18 @@ class AudioSQLAlchemyRepo(AudioRepo):
             # Build the query with the full-text search condition
             query = (
                 select(
-                    UserRawUploadedFile.user_id,
+                    UserAudioFile.user_id,
                     UserRawUploadedFile.original_file_name,
                     UserRawUploadedFile.file_name,
                     UserRawUploadedFile.created_at,
                     AudioFile.file_size_in_bytes,
-                    AudioFileMeta.length_in_seconds,
+                    AudioFile.length_in_seconds,
                     User.nickname,
                     AudioFile.file_type,
                 )
                 .join(UserAudioFile, UserAudioFile.upload_id == UserRawUploadedFile.id)
                 .join(AudioFile, UserAudioFile.audio_file_id == AudioFile.id)
-                .join(AudioFileMeta, AudioFile.meta_id == AudioFileMeta.id)
-                .join(User, UserRawUploadedFile.user_id == User.id)
+                .join(User, UserAudioFile.user_id == User.id)
                 .filter(tsvector.op("@@")(tsquery))
                 .order_by(desc(UserRawUploadedFile.created_at),desc(AudioFile.file_type))
                 .limit(limit)

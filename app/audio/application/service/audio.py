@@ -1,4 +1,3 @@
-# app/audio/application/service/audio_service.py
 import asyncio
 import os
 from typing import List
@@ -11,7 +10,6 @@ from app.audio.adapter.output.persistence.repository_adapter import (
 from app.audio.domain.command import ConvertAudioCommand, UploadAudioCommand
 from app.audio.domain.entity.audio_file import (
     AudioFile,
-    AudioFileMeta,
     AudioFileRead,
     UserAudioFile,
     UserRawUploadedFile,
@@ -43,18 +41,18 @@ class AudioService(AudioServiceUseCase):
         """Convert audio"""
 
     @Transactional()
-    async def upload_audio(self, command: UploadAudioCommand) -> str:
+    async def upload_audio(self, command: UploadAudioCommand) -> int:
         upload_name = str(uuid4())
         await self.repo_binary.upload_audio(
             name=upload_name, data=command.data, length=command.len
         )
         user_raw_uploaded_file = UserRawUploadedFile.create(
-            user_id=command.user_id,
             file_name=upload_name,
             original_file_name=command.name,
         )
         await self.repository.save_upload_audio_file_record(user_raw_uploaded_file)
-        return upload_name
+        await self.repository.persist()
+        return user_raw_uploaded_file.id
 
     def _do_audio_file_conversion(self, file_name, audio_type) -> str:
         os.makedirs(audio_type, exist_ok=True)
@@ -74,18 +72,16 @@ class AudioService(AudioServiceUseCase):
 
     @Transactional()
     async def convert_audio(self, command: ConvertAudioCommand) -> str:
-        file_name = command.file_name
         download_audio_formats = ["wav", "mp3"]
+        file_name = await self.repository.get_raw_file_name(
+            command.user_id
+        )
         await self.repo_binary.download_audio(
             name=file_name, output_file_path=file_name
         )
         length_in_seconds = int(self.converter.get_audio_duration(file_name))
         generated_files = [file_name]
         try:
-            meta = AudioFileMeta.create(length_in_seconds=length_in_seconds)
-            await self.repository.save_audio_file_meta(meta)
-            await self.repository.persist()
-
             for audio_format in download_audio_formats:
                 fmt_file_name = await asyncio.to_thread(
                     self._do_audio_file_conversion,
@@ -99,7 +95,7 @@ class AudioService(AudioServiceUseCase):
                 )
 
                 audio_file = AudioFile.create(
-                    meta_id=meta.id,
+                    length_in_seconds=length_in_seconds,
                     file_name=os.path.basename(fmt_file_name),
                     file_type=audio_format,
                     file_size_in_bytes=os.path.getsize(fmt_file_name),
@@ -110,9 +106,7 @@ class AudioService(AudioServiceUseCase):
                 user_audio = UserAudioFile.create(
                     user_id=command.user_id,
                     audio_file_id=str(audio_file.id),
-                    raw_audio_file_id=await self.repository.download_audio_id(
-                        file_name
-                    ),
+                    raw_audio_file_id=command.upload_id,
                 )
                 await self.repository.save_user_audio_file(user_audio)
                 await self.repository.persist()

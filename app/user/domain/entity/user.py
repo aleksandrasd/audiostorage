@@ -22,9 +22,6 @@ class User(Base, TimestampMixin):
     is_admin: Mapped[bool] = mapped_column(default=False)
     location: Mapped[Location] = composite(mapped_column("lat"), mapped_column("lng"))
 
-    raw_uploads: Mapped[list["UserRawUploadedFile"]] = relationship(
-        back_populates="user", cascade="all, delete-orphan"
-    )
     audio_files: Mapped[list["UserAudioFile"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )

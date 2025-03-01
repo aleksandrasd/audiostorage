@@ -69,11 +69,11 @@ async def upload_audio(
         name=file.filename,
         user_id=user_id,
     )
-    upload_name = await usecase.upload_audio(upload_command)
+    upload_id = await usecase.upload_audio(upload_command)
     task = await asyncio.to_thread(
         celery_app.send_task,
         CONVERT_AUDIO,
-        kwargs={"user_id": user_id, "file_name": upload_name},
+        kwargs={"user_id": user_id, "upload_id": upload_id},
     )
     # task = await asyncio.to_thread(
     #     convert_audio.delay,

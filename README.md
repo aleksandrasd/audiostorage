@@ -45,13 +45,14 @@ Postgres database: localhost:5432 (login: postgres, psw: mysecretpassword)
 
 1. User uploads file;
 2. App uploads the file to object storage (Minio);
-3. App puts job into Queue (Redis);
+3. App "puts" job to convert files into Queue (Redis);
 4. Worker "gets" a new job - downloads files from object storage, convert to mp3 and wav format, uploads files into object storage, changes job status in database (postgres)
 
 **Usecase: search**
 
 Full text search is implemented in postgres. I only customized tokenization.
 
+I use TeamHide's fastapi boilerplate (see first commit).
 
 # Entities
 
