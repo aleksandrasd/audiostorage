@@ -59,15 +59,11 @@ class AudioFile(Base):
     id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
     )
-    meta_id: Mapped[int] = mapped_column(
-        BigInteger, ForeignKey("audio_file_meta.id", ondelete="CASCADE"), nullable=False
-    )
     file_name: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
     file_type: Mapped[Enum] = mapped_column(Enum("mp3", "wav", name="audio_type"))
     file_size_in_bytes: Mapped[int] = mapped_column(BigInteger)
     length_in_seconds: Mapped[int] = mapped_column(BigInteger)
 
-    meta: Mapped["AudioFileMeta"] = relationship(back_populates="audio_files")
     user_connections: Mapped[list["UserAudioFile"]] = relationship(
         back_populates="audio_file"
     )

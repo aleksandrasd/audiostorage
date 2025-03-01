@@ -5,7 +5,6 @@ from urllib3 import HTTPResponse
 
 from app.audio.domain.entity.audio_file import (
     AudioFile,
-    AudioFileMeta,
     AudioFileRead,
     UserAudioFile,
     UserRawUploadedFile,
@@ -37,9 +36,6 @@ class AudioRepositoryAdapter:
 
     async def get_audio_formats_for_download(self) -> List[str] | None:
         return await self.audio_repo.get_audio_formats_for_download()
-
-    async def save_audio_file_meta(self, audio_file_meta: AudioFileMeta) -> None:
-        await self.audio_repo.save_audio_file_meta(audio_file_meta)
 
     async def save_audio_file(self, audio_file: AudioFile) -> None:
         await self.audio_repo.save_audio_file(audio_file)

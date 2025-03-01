@@ -10,7 +10,6 @@ from app.audio.adapter.output.persistence.repository_adapter import (
 from app.audio.domain.command import ConvertAudioCommand, UploadAudioCommand
 from app.audio.domain.entity.audio_file import (
     AudioFile,
-    AudioFileMeta,
     AudioFileRead,
     UserAudioFile,
     UserRawUploadedFile,

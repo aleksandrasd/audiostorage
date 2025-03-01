@@ -3,7 +3,6 @@ from typing import List
 
 from app.audio.domain.entity.audio_file import (
     AudioFile,
-    AudioFileMeta,
     AudioFileRead,
     UserAudioFile,
     UserRawUploadedFile,
@@ -16,10 +15,6 @@ class AudioRepo(ABC):
         self, user_raw_uploaded_file: UserRawUploadedFile
     ) -> None:
         """save_upload_music_file_record"""
-
-    @abstractmethod
-    async def save_audio_file_meta(self, audio_file_meta: AudioFileMeta) -> None:
-        """save_audio_file_meta"""
 
     @abstractmethod
     async def save_audio_file(self, audio_file: AudioFile) -> None:

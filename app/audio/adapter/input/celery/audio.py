@@ -14,10 +14,10 @@ from core.db.session import FunScopedSession
 @inject
 async def _convert_audio(
     user_id: int,
-    file_name: str,
+    upload_id: str,
     usecase: AudioServiceUseCase = Provide[Container.audio_service],
 ) -> None:
-    command = ConvertAudioCommand(user_id=user_id, file_name=file_name)
+    command = ConvertAudioCommand(user_id=user_id, upload_id=upload_id)
     await usecase.convert_audio(command)
 
 
