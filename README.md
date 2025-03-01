@@ -1,8 +1,8 @@
 
 
-# Intro
+# Audiostorage
 
-An audio storage app.  
+App for storing, searching audio.  
 
 Features: 
 
