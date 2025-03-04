@@ -9,6 +9,7 @@ from app.user.domain.command import CreateUserCommand
 from app.user.domain.entity.user import User, UserRead
 from app.user.domain.usecase.user import UserUseCase
 from app.user.domain.vo.location import Location
+from core.config import config
 from core.db import Transactional
 from core.helpers.token import TokenHelper
 
@@ -64,7 +65,7 @@ class UserService(UserUseCase):
             raise UserNotFoundException
 
         response = LoginResponseDTO(
-            token=TokenHelper.encode(payload={"user_id": user.id}),
-            refresh_token=TokenHelper.encode(payload={"sub": "refresh"}),
+            token=TokenHelper.encode(payload={"user_id": user.id}, expire_period=config.JWT_TOKEN_EXPIRE_PERIOD),
+            refresh_token=TokenHelper.encode(payload={"user_id": user.id}, expire_period=config.JWT_REFRESH_TOKEN_EXPIRE_PERIOD),
         )
         return response

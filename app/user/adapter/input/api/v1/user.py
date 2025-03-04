@@ -1,5 +1,5 @@
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 
 from app.container import Container
 from app.user.adapter.input.api.v1.request import CreateUserRequest, LoginRequest
@@ -47,7 +47,9 @@ async def create_user(
 @inject
 async def login(
     request: LoginRequest,
+    response: Response,
     usecase: UserUseCase = Depends(Provide[Container.user_service]),
 ):
     token = await usecase.login(email=request.email, password=request.password)
-    return {"token": token.token, "refresh_token": token.refresh_token}
+    response.set_cookie("refresh_token", token.refresh_token, httponly=True)
+    response.set_cookie("token", token.token)
