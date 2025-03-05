@@ -41,8 +41,7 @@ async def create_user(
 
 
 @user_router.post(
-    "/login",
-    response_model=LoginResponse,
+    "/login"
 )
 @inject
 async def login(
