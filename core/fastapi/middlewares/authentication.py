@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timedelta
 from http.cookies import SimpleCookie
 from fastapi import Request
 import jwt
@@ -31,10 +31,10 @@ class AuthBackend(AuthenticationBackend):
         cookies = SimpleCookie()
         cookies.load(conn.cookies)
         refresh_token = cookies.get("refresh_token")
-        if not cookies.get("refresh_token"):
+        if not refresh_token:
           return False, current_user
         
-        user_id: str | None = TokenMiddlewareHelper.extract_user_id(refresh_token)
+        user_id: str | None = TokenMiddlewareHelper.extract_user_id(refresh_token.value)
 
         if not user_id:
             return False, current_user
@@ -67,7 +67,7 @@ class CustomMiddleware(BaseHTTPMiddleware):
         if not user_id:
             return None
         
-        exp = datetime.now() + datetime.timedelta(seconds=config.JWT_TOKEN_EXPIRE_PERIOD)
+        exp = datetime.now() + timedelta(seconds=config.JWT_TOKEN_EXPIRE_PERIOD)
         token = jwt.encode(
             payload={
                 "user_id": user_id,
@@ -88,7 +88,7 @@ class CustomMiddleware(BaseHTTPMiddleware):
     
         token: str | None = cookies.get("token").value
         refresh_token: str | None = cookies.get("refresh_token").value
-        if token or not refresh_token:
+        if not token or not refresh_token:
             return response
 
         user_id: str | None = TokenMiddlewareHelper.extract_user_id(token) 
