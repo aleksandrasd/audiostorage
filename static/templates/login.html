@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - AudioStorage</title>
+    <title>Login / Create Account</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -20,9 +20,9 @@
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             width: 300px;
+            text-align: center;
         }
         .login-container h2 {
-            text-align: center;
             margin-bottom: 20px;
         }
         .login-container input[type="text"],
@@ -47,20 +47,64 @@
         .login-container input[type="submit"]:hover {
             background-color: #218838;
         }
+        .toggle-link {
+            color: #007bff;
+            cursor: pointer;
+            text-decoration: underline;
+            margin-top: 10px;
+            display: block;
+        }
+        .toggle-link:hover {
+            color: #0056b3;
+        }
     </style>
 </head>
 <body>
     <div class="login-container">
-        <h2>Login</h2>
-        <form action="/login" method="POST">
+        <h2 id="form-title">Login</h2>
+        <form id="auth-form" action="/login" method="POST">
             <label for="nickname">Nickname:</label>
             <input type="text" id="nickname" name="nickname" required>
 
             <label for="password">Password:</label>
             <input type="password" id="password" name="password" required>
 
-            <input type="submit" value="Login">
+            <!-- Hidden input to store the current URL path -->
+            <input type="hidden" id="current-path" name="current_path">
+
+            <input type="submit" id="submit-button" value="Login">
         </form>
+        <a id="toggle-link" class="toggle-link" onclick="toggleForm()">Create Account</a>
     </div>
+
+    <script>
+        // Function to toggle between Login and Create Account forms
+        function toggleForm() {
+            const formTitle = document.getElementById("form-title");
+            const submitButton = document.getElementById("submit-button");
+            const toggleLink = document.getElementById("toggle-link");
+            const authForm = document.getElementById("auth-form");
+
+            if (authForm.action.endsWith("/login")) {
+                // Switch to "Create Account" mode
+                formTitle.innerText = "Create Account";
+                submitButton.value = "Create Account";
+                authForm.action = "/create-account";
+                toggleLink.innerText = "Log In";
+            } else {
+                // Switch to "Login" mode
+                formTitle.innerText = "Login";
+                submitButton.value = "Login";
+                authForm.action = "/login";
+                toggleLink.innerText = "Create Account";
+            }
+        }
+
+        // Capture the current URL path and set it in the hidden input field
+        document.addEventListener("DOMContentLoaded", function () {
+            const currentPathInput = document.getElementById("current-path");
+            currentPathInput.value = window.location.pathname; // Set the current URL path
+        });
+    </script>
 </body>
 </html>
