@@ -44,24 +44,6 @@ async def upload_audio(
     file: UploadFile = File(...),
     usecase: AudioServiceUseCase = Depends(Provide[Container.audio_service]),
 ):
-    # Validate file size
-    # try:
-    #     max_size = await usecase.get_max_audio_file_size()
-    # except Exception as e:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-    #         detail="Failed to retrieve max size file policy"
-    # )
-    # content_length = request.headers.get("content-length")
-    # if not content_length or not content_length.isdigit():
-    #     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Content-Length")
-
-    # if file_size > max_size:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-    #         detail=f"File exceeds maximum size of {max_size} bytes"
-    # )
-    # Generate unique filename and upload to Minio
     user_id = 1
     upload_command = UploadAudioCommand(
         data=file.file,
