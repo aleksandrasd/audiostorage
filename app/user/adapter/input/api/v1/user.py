@@ -1,15 +1,13 @@
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, Query
 
 from app.container import Container
-from app.user.adapter.input.routes.request import CreateUserRequest, LoginRequest
-from app.user.adapter.input.routes.response import LoginResponse
+from app.user.adapter.input.api.v1.request import CreateUserRequest, LoginRequest
+from app.user.adapter.input.api.v1.response import LoginResponse
 from app.user.application.dto import CreateUserResponseDTO, GetUserListResponseDTO
 from app.user.domain.command import CreateUserCommand
 from app.user.domain.usecase.user import UserUseCase
-from core.exceptions.base import CustomException
 from core.fastapi.dependencies import IsAdmin, PermissionDependency
-from fastapi import status
 
 user_router = APIRouter()
 
@@ -43,26 +41,13 @@ async def create_user(
 
 
 @user_router.post(
-    "/login"
+    "/login",
+    response_model=LoginResponse,
 )
 @inject
 async def login(
     request: LoginRequest,
-    response: Response,
     usecase: UserUseCase = Depends(Provide[Container.user_service]),
 ):
     token = await usecase.login(email=request.email, password=request.password)
-    response.set_cookie("refresh_token", token.refresh_token, httponly=True)
-    response.set_cookie("token", token.token)
-
-
-@user_router.get(
-    "/login"
-)
-async def login():
-    raise CustomException
-    raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-            headers={"Location": "/login_aaa"}  # Redirect to the login page
-        )
+    return {"token": token.token, "refresh_token": token.refresh_token}

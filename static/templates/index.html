@@ -1,1 +1,102 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Website</title>
+    <style>
+        /* Basic styling for the header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+        }
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: bold;
+        }
+        .search-box {
+            display: flex;
+            align-items: center;
+        }
+        .search-box input {
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .upload-input {
+            display: none; /* Hide the file input */
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <!-- Navigation Links -->
+        <div class="nav-links">
+            <!-- <a href="/">Intro</a> -->
+            <a href="/list_user_audio">My Files</a>
+            <label for="file-upload" style="cursor: pointer;">Upload</label>
+			        <!-- Search Box -->
+        <div class="search-box">
+            <input type="text" id="search-input" placeholder="Search..." onkeypress="handleSearch(event)">
+        </div>
+        </div>
+
+
+    </header>
+
+    <!-- Hidden File Input for Upload -->
+    <input type="file" id="file-upload" class="upload-input" accept="audio/*,video/*" onchange="handleFileUpload()">
+
+    <script>
+        // Handle file upload
+
+	function handleFileUpload() {
+		const fileInput = document.getElementById('file-upload');
+		const file = fileInput.files[0];
+		if (file) {
+			const formData = new FormData();
+			formData.append('file', file);
+
+			// Submit the file immediately
+			fetch('/upload', {
+				method: 'POST',
+				body: formData,
+			})
+			.then(response => response.json())
+			.then(data => {
+				console.log('File uploaded:', data);
+				
+				// Assuming the backend returns a JSON object with a 'task_id' field
+				const taskId = data.task_id;
+				
+				// Redirect to the status page with the task_id
+				window.location.href = '/list_user_audio' //`/status/${taskId}`;
+			})
+			.catch(error => {
+				console.error('Error uploading file:', error);
+				alert('Error uploading file.');
+			});
+		}
+	}
+
+        // Handle search on pressing Enter
+        function handleSearch(event) {
+            if (event.key === 'Enter') {
+                const query = document.getElementById('search-input').value;
+                window.location.href = `/search?q=${encodeURIComponent(query)}`;
+            }
+        }
+    </script>
+	
+	{{ body }}
+</body>
+</html>
