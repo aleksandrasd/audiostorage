@@ -15,6 +15,7 @@ from core.fastapi.middlewares import (
     AuthenticationMiddleware,
     SQLAlchemyMiddleware,
 )
+from core.fastapi.middlewares.authentication import CustomMiddleware
 from core.helpers.cache import Cache, CustomKeyMaker, RedisBackend
 
 
@@ -59,6 +60,9 @@ def make_middleware() -> list[Middleware]:
             allow_credentials=True,
             allow_methods=["*"],
             allow_headers=["*"],
+        ),
+        Middleware(
+          CustomMiddleware  
         ),
         Middleware(
             AuthenticationMiddleware,
