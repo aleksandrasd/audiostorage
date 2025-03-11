@@ -17,6 +17,7 @@ from core.fastapi.middlewares import (
 )
 from core.fastapi.middlewares.authentication import CustomMiddleware
 from core.helpers.cache import Cache, CustomKeyMaker, RedisBackend
+from core.web import frontend_router
 
 
 def init_routers(app_: FastAPI) -> None:
@@ -27,6 +28,7 @@ def init_routers(app_: FastAPI) -> None:
     app_.include_router(user_router)
     app_.include_router(auth_router)
     app_.include_router(audio_router)
+    app_.include_router(frontend_router)
 
 
 def init_listeners(app_: FastAPI) -> None:

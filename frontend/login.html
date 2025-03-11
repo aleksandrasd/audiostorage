@@ -57,53 +57,81 @@
         .toggle-link:hover {
             color: #0056b3;
         }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="login-container">
         <h2 id="form-title">Login</h2>
-        <form id="auth-form" action="/login" method="POST">
+        <form id="auth-form">
             <label for="nickname">Nickname:</label>
             <input type="text" id="nickname" name="nickname" required>
 
             <label for="password">Password:</label>
             <input type="password" id="password" name="password" required>
 
-            <!-- Hidden input to store the current URL path -->
-            <input type="hidden" id="current-path" name="current_path">
-
             <input type="submit" id="submit-button" value="Login">
         </form>
+        <div id="error-message" class="error-message"></div>
         <a id="toggle-link" class="toggle-link" onclick="toggleForm()">Create Account</a>
     </div>
 
     <script>
-        // Function to toggle between Login and Create Account forms
-        function toggleForm() {
-            const formTitle = document.getElementById("form-title");
-            const submitButton = document.getElementById("submit-button");
-            const toggleLink = document.getElementById("toggle-link");
-            const authForm = document.getElementById("auth-form");
+        const formTitle = document.getElementById("form-title");
+        const submitButton = document.getElementById("submit-button");
+        const toggleLink = document.getElementById("toggle-link");
+        const authForm = document.getElementById("auth-form");
+        const errorMessage = document.getElementById("error-message");
 
-            if (authForm.action.endsWith("/login")) {
-                // Switch to "Create Account" mode
-                formTitle.innerText = "Create Account";
-                submitButton.value = "Create Account";
-                authForm.action = "/create-account";
-                toggleLink.innerText = "Log In";
-            } else {
-                // Switch to "Login" mode
+        let isLoginMode = true;
+
+        function toggleForm() {
+            isLoginMode = !isLoginMode;
+            if (isLoginMode) {
                 formTitle.innerText = "Login";
                 submitButton.value = "Login";
-                authForm.action = "/login";
                 toggleLink.innerText = "Create Account";
+            } else {
+                formTitle.innerText = "Create Account";
+                submitButton.value = "Create Account";
+                toggleLink.innerText = "Log In";
             }
+            errorMessage.style.display = "none"; 
         }
 
-        // Capture the current URL path and set it in the hidden input field
-        document.addEventListener("DOMContentLoaded", function () {
-            const currentPathInput = document.getElementById("current-path");
-            currentPathInput.value = window.location.pathname; // Set the current URL path
+        authForm.addEventListener("submit", async (event) => {
+            event.preventDefault(); 
+
+            const nickname = document.getElementById("nickname").value;
+            const password = document.getElementById("password").value;
+            const endpoint = isLoginMode ? "/api/v1/user/login" : "/api/v1/user/";
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ nickname, password }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    window.location.href = "/";
+                } else {
+                    errorMessage.innerText = data.message || "An error occurred. Please try again.";
+                    errorMessage.style.display = "block";
+                }
+            } catch (error) {
+                errorMessage.innerText = "An error occurred. Please try again.";
+                errorMessage.style.display = "block";
+                console.error("Error:", error);
+            }
         });
     </script>
 </body>

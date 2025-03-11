@@ -43,15 +43,15 @@ class UserSQLAlchemyRepo(UserRepo):
             stmt = await read_session.execute(select(User).where(User.id == user_id))
             return stmt.scalars().first()
 
-    async def get_user_by_email_and_password(
+    async def get_user_by_nickname_and_password(
         self,
         *,
-        email: str,
+        nickname: str,
         password: str,
     ) -> User | None:
         async with session_factory() as read_session:
             stmt = await read_session.execute(
-                select(User).where(and_(User.email == email, password == password))
+                select(User).where(and_(User.nickname == nickname, password == password))
             )
             return stmt.scalars().first()
 

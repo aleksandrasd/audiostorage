@@ -56,9 +56,9 @@ class UserService(UserUseCase):
 
         return True
 
-    async def login(self, *, email: str, password: str) -> LoginResponseDTO:
-        user = await self.repository.get_user_by_email_and_password(
-            email=email,
+    async def login(self, *, nickname: str, password: str) -> LoginResponseDTO:
+        user = await self.repository.get_user_by_nickname_and_password(
+            nickname=nickname,
             password=password,
         )
         if not user:

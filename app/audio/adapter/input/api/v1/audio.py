@@ -22,17 +22,6 @@ from core.helpers.string import convert_seconds_to_hms
 
 router = APIRouter()
 
-
-# Mount static files (if you have CSS/JS)
-router.mount("/static", StaticFiles(directory="static"), name="static")
-# Set up Jinja2 templates
-templates = Jinja2Templates(directory="static/templates")
-
-
-@router.get("/", response_class=HTMLResponse)
-async def read_root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
-
 @router.post(
     "/upload",
     response_model=AudioUploadResponseDTO,

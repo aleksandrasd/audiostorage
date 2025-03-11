@@ -29,14 +29,14 @@ class UserRepositoryAdapter:
     async def get_user_by_id(self, *, user_id: int) -> User | None:
         return await self.user_repo.get_user_by_id(user_id=user_id)
 
-    async def get_user_by_email_and_password(
+    async def get_user_by_nickname_and_password(
         self,
         *,
-        email: str,
+        nickname: str,
         password: str,
     ) -> User | None:
-        return await self.user_repo.get_user_by_email_and_password(
-            email=email,
+        return await self.user_repo.get_user_by_nickname_and_password(
+            nickname=nickname,
             password=password,
         )
 
