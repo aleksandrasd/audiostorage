@@ -107,7 +107,7 @@ async def test_get_user_by_nickname_and_password(session: AsyncSession):
     await session.commit()
 
     # When
-    sut = await user_repo.get_user_by_nickname_and_password(email=email, password=password)
+    sut = await user_repo.get_user_by_nickname_and_password(nickname=nickname, password=password)
 
     # Then
     assert isinstance(sut, User)
