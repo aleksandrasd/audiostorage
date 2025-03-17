@@ -30,7 +30,7 @@ class UserRepo(ABC):
     async def get_user_by_nickname_and_password(
         self,
         *,
-        nickname: str,
+        email: str,
         password: str,
     ) -> User | None:
         """Get user by email and password"""

@@ -11,7 +11,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 # from app.audio.adapter.input.celery import convert_audio
-from app.audio.adapter.input.api.v1.response import UserAudioResponse
 from app.audio.application.dto import AudioUploadResponseDTO
 from app.audio.domain.command import UploadAudioCommand
 from app.audio.domain.entity.audio_file import AudioFileRead
@@ -19,7 +18,6 @@ from app.audio.domain.usecase.audio import AudioServiceUseCase
 from app.container import Container
 from celery_task import celery_app
 from celery_task.name import CONVERT_AUDIO
-from core.fastapi.dependencies.permission import IsAuthenticated, PermissionDependency
 from core.helpers.string import convert_seconds_to_hms
 
 router = APIRouter()
@@ -27,7 +25,7 @@ router = APIRouter()
 @router.post(
     "/upload",
     response_model=AudioUploadResponseDTO,
-    dependencies=[Depends(PermissionDependency([IsAuthenticated]))],
+    # dependencies=[Depends(PermissionDependency([IsAuthenticated]))],
 )
 @inject
 async def upload_audio(
@@ -35,7 +33,7 @@ async def upload_audio(
     file: UploadFile = File(...),
     usecase: AudioServiceUseCase = Depends(Provide[Container.audio_service]),
 ):
-    user_id = request.user.id
+    user_id = 1
     upload_command = UploadAudioCommand(
         data=file.file,
         len=os.fstat(file.file.fileno()).st_size,
@@ -48,6 +46,12 @@ async def upload_audio(
         CONVERT_AUDIO,
         kwargs={"user_id": user_id, "upload_id": upload_id},
     )
+    # task = await asyncio.to_thread(
+    #     convert_audio.delay,
+    #     user_id=user_id,
+    #     file_name=file.filename,
+    #     audio_types=["wav", "mp3"]
+    # )
     return {"task_id": task.id}
 
 
@@ -58,7 +62,6 @@ async def download_file(
     file_name: str,
     original_file_name: str,
     usecase: AudioServiceUseCase = Depends(Provide[Container.audio_service]),
-    dependencies=[Depends(PermissionDependency([IsAuthenticated]))],
 ) -> FileResponse:
     temp_file = temp_file_name = tempfile.mktemp()
     await usecase.download_audio_file(file_name, temp_file)
@@ -67,41 +70,39 @@ async def download_file(
     )
 
 
-@router.get("/list_user_audio",
-            dependencies=[Depends(PermissionDependency([IsAuthenticated]))],
-            response_model=list[UserAudioResponse])
+@router.get("/list_audio")
+@inject
+async def list_audio(
+    usecase: AudioServiceUseCase = Depends(Provide[Container.audio_service])
+) -> List[AudioFileRead]:
+    return await usecase.list_audio_files()
+
+
+@router.get("/list_user_audio")
 @inject
 async def list_user_audio(
     request: Request,
-    usecase: AudioServiceUseCase = Depends(Provide[Container.audio_service]),
-    dependencies=[Depends(PermissionDependency([IsAuthenticated]))]
-):
-    user_id = request.user.id
-    audio_files = await usecase.list_audio_files(user_id=user_id)
+    usecase: AudioServiceUseCase = Depends(Provide[Container.audio_service])
+) -> List[AudioFileRead]:
+    audio_files = await usecase.list_audio_files(user_id=1)
     grouped_files = defaultdict(list)
     for file in audio_files:
         audio = file.model_dump()
         base_name =os.path.splitext(audio['original_file_name'])[0]  
         audio['base_name'] = base_name
-        audio['actual_file_name'] =  f"{base_name}.{audio['file_type']}"
+        audio['new_ext_name'] =  f"{base_name}.{audio['file_type']}"
         grouped_files[str(file.created_at)].append(audio)
-UserAudioResponse
-    return grouped_files
+
+    return templates.TemplateResponse("list.html", {"request": request, "grouped_files": grouped_files})
 
 
-
-
-
-@router.get("/search",
-            dependencies=[Depends(PermissionDependency([IsAuthenticated]))],
-            response_model = list[AudioFileRead])
+@router.get("/search")
 @inject
 async def search_audio(
     request: Request,
     q: str = Query(..., description="Search query"),
     usecase: AudioServiceUseCase = Depends(Provide[Container.audio_service]),
-    dependencies=[Depends(PermissionDependency([IsAuthenticated]))]
-):
+) -> List[AudioFileRead]:
     audio_files = await usecase.files_full_text_search(q)
 
     grouped_files = defaultdict(list)
@@ -112,4 +113,4 @@ async def search_audio(
         audio['new_ext_name'] =  f"{base_name}.{audio['file_type']}"
         grouped_files[str(file.created_at)].append(audio)
 
-    return grouped_files
+    return templates.TemplateResponse("list.html", {"request": request, "grouped_files": grouped_files})
