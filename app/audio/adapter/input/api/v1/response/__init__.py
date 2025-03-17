@@ -9,4 +9,19 @@ class LoginResponse(BaseModel):
 
 
 class ConversionStatusResponse(BaseModel):
-    status: TaskState
+    status: TaskState = Field(..., description="Conversion status")
+
+
+class UserAudioType(BaseModel):
+    id: str  = Field(..., title="File ID")
+    ext: str = Field(..., title="File extension")
+    file_type: str = Field(..., title="Audio format")
+    file_size_in_bytes: int = Field(..., title="File size")
+    
+
+class UserAudioResponse(BaseModel):
+    audio_types: list[UserAudioType]
+    base_name: str = Field(..., title="File base name")
+    nickname: str = Field(..., title="User nickname")
+    length_in_seconds: int = Field(..., title="Audio length in seconds")
+>>>>>>> Stashed changes

@@ -83,8 +83,14 @@ def init_cache() -> None:
 
 def create_app() -> FastAPI:
     app_ = FastAPI(
-        title="Hide",
-        description="Hide API",
+        title="Audio Storage",
+        summary="Audio Storage API",
+        description="""
+Audio Storage API
+
+Allows to store audio, search for specific audio among uploaded audios by 
+any person.
+"""
         version="1.0.0",
         docs_url=None if config.ENV == "production" else "/docs",
         redoc_url=None if config.ENV == "production" else "/redoc",

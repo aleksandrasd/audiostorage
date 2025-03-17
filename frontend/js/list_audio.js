@@ -1,12 +1,12 @@
 function generateAudioList(groupedFiles) {
     let html = '<ul>';
-
-    for (const [originalFileName, files] of Object.entries(groupedFiles)) {
-        html += `<li>${files[0].base_name}`;
-        files.forEach(file => {
-            html += ` [<a href="/download/${file.file_name}/${file.new_ext_name}">${file.file_type}</a>]`;
-        });
-        html += '</li>';
+    let time = new Date(userAudioFiles.length_in_seconds * 1000).toISOString().substr(11, 8);
+    for (const userAudio of userAudioFiles) {
+      html += `<li>${userAudio.base_name}`;
+      userAudio.audio_types.forEach(file => {
+          html += ` [<a href="/download/${file.id}/${userAudio.base_name}.${file.ext}">${file.ext.toUpperCase()}</a>]`;
+      });
+      html += ` ${time}</li>`;
     }
     html += '</ul>';
     return html;
