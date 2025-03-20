@@ -30,11 +30,17 @@ class AudioService(AudioServiceUseCase):
         self.repository = repository
         self.converter = converter
         self.repo_binary = repo_binary
-
-    async def download_audio_file(self, filename: str, output_path: str) -> None:
-        # TODO: throw exception
+    
+    async def get_download_file_name(self, id: str) -> str:
+        original_file_name  = await self.repository.get_original_file_name_by_id(id)
+        ext = await self.repository.get_file_extension_by_id(id)
+        base_name, _ = os.path.splitext(original_file_name)
+        return f"{base_name}.{base_name}"
+    
+    async def download_audio_file(self, id: str, output_path: str) -> None:
+        file_name = await self.repository.get_file_name_by_id(id)
         await self.repo_binary.download_audio(
-            name=filename, output_file_path=output_path
+            name=file_name, output_file_path=output_path
         )
 
     async def list_audio(self, user_id: int) -> List[AudioFileRead]:

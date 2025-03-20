@@ -19,6 +19,15 @@ class AudioRepositoryAdapter:
     def __init__(self, *, audio_repo: AudioRepo):
         self.audio_repo = audio_repo
 
+    async def get_file_name_by_id(self, id: str) -> None:
+        return self.audio_repo.get_file_name_by_id(id)
+    
+    async def get_original_file_name_by_id(self, id: str) -> None:
+        return self.audio_repo.get_original_file_name_by_id(id)
+    
+    async def get_file_extension_by_id(self, id: str) -> None:
+        return self.audio_repo.get_file_extension_by_id(id)
+    
     async def get_raw_file_name(self, id: int) -> str:
         return await self.audio_repo.get_raw_file_name(
             id

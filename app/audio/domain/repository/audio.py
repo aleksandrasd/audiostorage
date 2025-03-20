@@ -11,6 +11,18 @@ from app.audio.domain.entity.audio_file import (
 
 class AudioRepo(ABC):
     @abstractmethod
+    async def get_file_extension_by_id(self, id: str) -> str:
+        """get file extension by id"""
+        
+    @abstractmethod
+    async def get_original_file_name_by_id(self, id: str) -> str:
+        """get original file name by id"""
+    
+    @abstractmethod
+    async def get_file_name_by_id(self, id: str) -> str:
+        """get file name by id"""
+      
+    @abstractmethod
     async def save_upload_audio_file_record(
         self, user_raw_uploaded_file: UserRawUploadedFile
     ) -> None:

@@ -7,7 +7,15 @@ from app.audio.domain.entity.audio_file import AudioFileRead
 
 class AudioServiceUseCase:
     @abstractmethod
+    async def get_download_file_name(self, id: str) -> str:
+        """Get download file name by id"""
+
+    @abstractmethod
     async def download_audio_file(self, filename: str, output_path: str) -> None:
+        """download_audio_file"""
+
+    @abstractmethod
+    async def get_file_name_by_id(self, id: str) -> None:
         """download_audio_file"""
 
     @abstractmethod

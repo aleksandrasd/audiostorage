@@ -14,7 +14,31 @@ from app.user.domain.entity.user import User
 from core.db.session import session, session_factory
 
 
-class AudioSQLAlchemyRepo(AudioRepo):
+class AudioSQLAlchemyRepo(AudioRepo):      
+    async def get_file_name_by_id(self, id: str) -> str:
+        async with session_factory() as read_session:
+            query = (
+                select(AudioFile.file_name)
+                .where(
+                    AudioFile.id == id,
+                )
+            )
+            result = await read_session.execute(query)
+            return result.scalars().first()
+    
+    async def get_original_file_name_by_id(self, id: str) -> str:
+        async with session_factory() as read_session:
+            query = (
+                select(UserRawUploadedFile.original_file_name)
+                .join(UserRawUploadedFile,
+                      UserAudioFile.upload_id == UserRawUploadedFile.id)
+                .where(
+                    UserAudioFile.audio_file_id == id,
+                )
+            )
+            result = await read_session.execute(query)
+            return result.scalars().first()
+
     async def save_upload_audio_file_record(
         self, user_raw_uploaded_file: UserRawUploadedFile
     ) -> None:

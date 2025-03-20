@@ -53,7 +53,7 @@ async def upload_audio(
     return {"task_id": task.id}
 
 
-@router.get("/download/{id}/{file_name}",
+@router.get("/download/{id}",
     summary = "Download audio",
     description="Downloads audio with specified name",
     response_model=FileResponse)
@@ -64,10 +64,11 @@ async def download_file(
     file_name: str,
     usecase: AudioServiceUseCase = Depends(Provide[Container.audio_service]),
 ):
-    temp_file = temp_file_name = tempfile.mktemp()
+    temp_file = tempfile.mktemp()
     await usecase.download_audio_file(id, temp_file)
+    download_file_name = await usecase.get_download_file_name(id)
     return FileResponse(
-        temp_file, filename=file_name, media_type="application/octet-stream"
+        temp_file, filename=download_file_name, media_type="application/octet-stream"
     )
 
 
