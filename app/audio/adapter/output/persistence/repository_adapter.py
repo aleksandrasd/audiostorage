@@ -22,7 +22,7 @@ class AudioRepositoryAdapter:
     async def get_file_name_by_id(self, id: str) -> None:
         return self.audio_repo.get_file_name_by_id(id)
     
-    async def get_original_file_name_by_id(self, id: str) -> None:
+    async def get_original_file_name_by_id(self, id: str) -> str | None:
         return self.audio_repo.get_original_file_name_by_id(id)
     
     async def get_file_extension_by_id(self, id: str) -> None:

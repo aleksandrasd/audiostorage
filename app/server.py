@@ -2,6 +2,7 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.middleware import Middleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi_pagination import add_pagination
 
 from app.audio.adapter.input.api import router as audio_router
 from app.auth.adapter.input.api import router as auth_router
@@ -88,8 +89,7 @@ def create_app() -> FastAPI:
         description="""
 Audio Storage API
 
-Allows to store audio, search for specific audio among uploaded audios by 
-any person.
+With audio storage API upload any media type - automatically converts to audio - to the platform, search for audio among uploaded audios by others. 
 """
         version="1.0.0",
         docs_url=None if config.ENV == "production" else "/docs",
@@ -100,6 +100,7 @@ any person.
     init_routers(app_=app_)
     init_listeners(app_=app_)
     init_cache()
+    add_pagination(app_)
     return app_
 
 

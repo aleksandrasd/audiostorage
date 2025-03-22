@@ -13,9 +13,9 @@ class AudioRepo(ABC):
     @abstractmethod
     async def get_file_extension_by_id(self, id: str) -> str:
         """get file extension by id"""
-        
+
     @abstractmethod
-    async def get_original_file_name_by_id(self, id: str) -> str:
+    async def get_original_file_name_by_id(self, id: str) -> str | None:
         """get original file name by id"""
     
     @abstractmethod

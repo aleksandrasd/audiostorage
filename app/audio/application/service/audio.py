@@ -31,8 +31,10 @@ class AudioService(AudioServiceUseCase):
         self.converter = converter
         self.repo_binary = repo_binary
     
-    async def get_download_file_name(self, id: str) -> str:
+    async def get_download_file_name(self, id: str) -> str | None:
         original_file_name  = await self.repository.get_original_file_name_by_id(id)
+        if not original_file_name:
+            return None
         ext = await self.repository.get_file_extension_by_id(id)
         base_name, _ = os.path.splitext(original_file_name)
         return f"{base_name}.{base_name}"

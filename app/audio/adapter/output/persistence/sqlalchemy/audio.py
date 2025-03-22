@@ -26,7 +26,7 @@ class AudioSQLAlchemyRepo(AudioRepo):
             result = await read_session.execute(query)
             return result.scalars().first()
     
-    async def get_original_file_name_by_id(self, id: str) -> str:
+    async def get_original_file_name_by_id(self, id: str) -> str | None:
         async with session_factory() as read_session:
             query = (
                 select(UserRawUploadedFile.original_file_name)
