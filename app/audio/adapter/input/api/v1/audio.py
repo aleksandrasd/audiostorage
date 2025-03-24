@@ -5,7 +5,7 @@ import tempfile
 from typing import List
 
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends, File, Path, Query, Request, Response, UploadFile
+from fastapi import APIRouter, Cookie, Depends, File, Path, Query, Request, Response, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -30,7 +30,7 @@ router = APIRouter()
 @router.post(
     "/upload",
     summary = "Upload audio",
-    description="Audio is uploaded, converted to appropriate audio formats.",
+    description="Uploads any media file and converts to appropriate audio formats.",
     response_model=AudioUploadResponseDTO,
     dependencies=[Depends(PermissionDependency([IsAuthenticated]))],
     status_code=status.HTTP_202_ACCEPTED
@@ -38,7 +38,8 @@ router = APIRouter()
 @inject
 async def upload_audio(
     request: Request,
-    file: UploadFile = File(...),
+    id: str = Cookie(..., title = "User ID", description="User ID"),
+    file: UploadFile = File(..., title = "Media file", description="Takes any media file and uploads as an audio"),
     usecase: AudioServiceUseCase = Depends(Provide[Container.audio_service]),
 ):
     upload_command = UploadAudioCommand(
@@ -63,8 +64,8 @@ async def upload_audio(
 @inject
 async def download_file(
     response: Response,
-    id: str,
-    file_name: str,
+    id: str = Path(..., title = "File ID", description="The ID of the audio to be downloaded"),
+    file_name: str = Path(..., title = "File name", description="The file name of the audio to be downloaded"),
     usecase: AudioServiceUseCase = Depends(Provide[Container.audio_service]),
 ):
     download_file_name = await usecase.get_download_file_name(id)
@@ -98,7 +99,9 @@ async def list_my_audio(
 @inject
 async def list_user_audio(
     request: Request,
-    user_id: int,
+    user_id: int = Path(..., title = "Used ID", description = "User ID of an user "),
+    limit: int = Query(30, title="Maximum number of audio file names return", description="Maximum number of audio file names return"),
+    skip: int = Query(0, title="Number of audio files to skip", description="Number of first audio files to skip. Only subsequent audio file names will be included in the final output."), 
     usecase: AudioServiceUseCase = Depends(Provide[Container.audio_service]),
     dependencies=[Depends(PermissionDependency([IsAuthenticated]))]
 ):
@@ -112,11 +115,13 @@ async def list_user_audio(
     summary = "Search audio",
     description="Conduct full text search for an audio.",
     response_model = list[UserAudioResponse])
-@inject
+@inject 
 async def search_audio(
     request: Request,
-    q: str = Query(..., description="Search query"),
+    q: str = Query(..., title="Query string", description="Query string for search audio by name"),
+    page: int = Query(30, title="Page number", description="Audio search result page number to return"),
+    per_page: int = Query(0, title="Maximum audio files per page", description="Maximum audio files to return per one page."), 
     usecase: AudioServiceUseCase = Depends(Provide[Container.audio_service]),
 ):
-    audio_files = await usecase.files_full_text_search(q)
+    audio_files = await usecase.files_full_text_search(q, None, page = page, per_page = per_page)
     return AudioHelper.format_file_list(audio_files)

@@ -74,9 +74,11 @@ class AudioService(AudioServiceUseCase):
         return await self.repository.list_audio_files(user_id, limit)
 
     async def files_full_text_search(
-        self, user_id: int | None, limit: int = 100
+        self, user_id: int | None, page: int, per_page = 20
     ) -> List[AudioFileRead]:
-        return await self.repository.files_full_text_search(user_id, limit)
+        if per_page > 20:
+            per_page = 20
+        return await self.repository.files_full_text_search(user_id, limit = per_page, offset = per_page * (page-1))
 
     @Transactional()
     async def convert_audio(self, command: ConvertAudioCommand) -> str:

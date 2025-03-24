@@ -59,7 +59,7 @@ class AudioRepo(ABC):
         """get_file_type_by_filenames"""
 
     @abstractmethod
-    async def files_full_text_search(self, query: str) -> List[AudioFileRead]:
+    async def files_full_text_search(self, query: str, user_id: int | None, limit: int, offset: int) -> List[AudioFileRead]:
         """files_full_text_search"""
 
     @abstractmethod
@@ -67,12 +67,6 @@ class AudioRepo(ABC):
         self, user_id: int | None = None, limit: int = 100
     ) -> List[AudioFileRead]:
         """list_audio_files"""
-
-    @abstractmethod
-    async def files_full_text_search(
-        self, query: str, limit: int = 100
-    ) -> List[AudioFileRead]:
-        """files_full_text_search"""
 
     @abstractmethod
     async def get_raw_file_name(self, id: int) -> str:

@@ -126,7 +126,7 @@ class AudioSQLAlchemyRepo(AudioRepo):
             return result.all()
 
     async def files_full_text_search(
-        self, query: str, limit: int = 100
+        self, query: str, user_id: int | None, limit: int, offset: int
     ) -> List[AudioFileRead]:
         async with session_factory() as read_session:
             # Construct the full-text search condition
@@ -151,9 +151,16 @@ class AudioSQLAlchemyRepo(AudioRepo):
                 .join(AudioFile, UserAudioFile.audio_file_id == AudioFile.id)
                 .join(User, UserAudioFile.user_id == User.id)
                 .filter(tsvector.op("@@")(tsquery))
+            )
+            if user_id:
+               query = query.filter(UserAudioFile.user_id == user_id) 
+                           
+             query = (      
+                 query         
                 .order_by(desc(UserRawUploadedFile.created_at),desc(AudioFile.file_type))
                 .limit(limit)
-            )
+                .offset(offset)
+             )
 
             # Execute the query and return the results
             results = await read_session.execute(query)

@@ -72,9 +72,11 @@ class AudioRepositoryAdapter:
         return [AudioFileRead.model_validate(result) for result in results]
 
     async def files_full_text_search(
-        self, query: str, limit: int = 100
+        self, query: str, user_id: int | None, page: int, per_page: int = 20
     ) -> List[AudioFileRead]:
-        results = await self.audio_repo.files_full_text_search(query, limit)
+        if per_page > 20:
+            per_page = 20
+        results = await self.audio_repo.files_full_text_search(query, user_id, limit = per_page, offset = per_page * (page-1))
         return [AudioFileRead.model_validate(result) for result in results]
 
 

@@ -32,7 +32,7 @@ class AudioServiceUseCase:
 
     @abstractmethod
     async def files_full_text_search(
-        self, query: str, limit: int = 100
+        self, user_id: int | None, page: int, per_page = 20
     ) -> List[AudioFileRead]:
         """files_full_text_search"""
 
