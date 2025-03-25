@@ -2,7 +2,6 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.middleware import Middleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from fastapi_pagination import add_pagination
 
 from app.audio.adapter.input.api import router as audio_router
 from app.auth.adapter.input.api import router as auth_router
@@ -100,7 +99,6 @@ With audio storage API upload any media type - automatically converts to audio -
     init_routers(app_=app_)
     init_listeners(app_=app_)
     init_cache()
-    add_pagination(app_)
     return app_
 
 

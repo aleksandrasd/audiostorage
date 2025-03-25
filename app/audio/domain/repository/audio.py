@@ -64,8 +64,8 @@ class AudioRepo(ABC):
 
     @abstractmethod
     async def list_audio_files(
-        self, user_id: int | None = None, limit: int = 100
-    ) -> List[AudioFileRead]:
+        self, user_id: int | None, limit: int, offset: int
+    ) -> tuple[list[AudioFileRead], int]:
         """list_audio_files"""
 
     @abstractmethod

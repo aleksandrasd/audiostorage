@@ -38,6 +38,6 @@ class AudioServiceUseCase:
 
     @abstractmethod
     async def list_audio_files(
-        self, user_id: int | None = None, limit: int = 100
+        self, user_id: int | None = None, page: int = 1, per_page = 10
     ) -> List[AudioFileRead]:
         """list_audio_files"""

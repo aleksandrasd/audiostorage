@@ -4,6 +4,7 @@ from sqlalchemy import desc, func, select
 
 from app.audio.domain.entity.audio_file import (
     AudioFile,
+    AudioFileCountedRead,
     AudioFileRead,
     Policy,
     UserAudioFile,
@@ -101,8 +102,8 @@ class AudioSQLAlchemyRepo(AudioRepo):
             return result.scalars().first()
 
     async def list_audio_files(
-        self, user_id: int | None = None, limit: int = 100
-    ) -> List[AudioFileRead]:
+        self, user_id: int | None, limit: int, offset: int
+    ) -> tuple[AudioFileRead, int]:
         async with session_factory() as read_session:
             s = (
                 select(
@@ -121,9 +122,15 @@ class AudioSQLAlchemyRepo(AudioRepo):
             )
             if user_id:
                 s = s.where(UserAudioFile.user_id == user_id)
-            s = s.order_by(desc(UserRawUploadedFile.created_at),desc(AudioFile.file_type)).limit(limit)
+            total_count = s.count()
+            s = (
+                s
+                .order_by(desc(UserRawUploadedFile.created_at).desc(AudioFile.file_type))
+                .limit(limit)
+                .offset(skip)
+            )
             result = await read_session.execute(s)
-            return result.all()
+            return result.all(), total_count
 
     async def files_full_text_search(
         self, query: str, user_id: int | None, limit: int, offset: int
@@ -154,12 +161,12 @@ class AudioSQLAlchemyRepo(AudioRepo):
             )
             if user_id:
                query = query.filter(UserAudioFile.user_id == user_id) 
-                           
+
              query = (      
                  query         
                 .order_by(desc(UserRawUploadedFile.created_at),desc(AudioFile.file_type))
                 .limit(limit)
-                .offset(offset)
+                .offset(skip)
              )
 
             # Execute the query and return the results

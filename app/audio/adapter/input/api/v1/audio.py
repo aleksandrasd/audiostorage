@@ -86,10 +86,13 @@ async def download_file(
 @inject
 async def list_my_audio(
     request: Request,
+    id: str = Cookie(..., title = "User ID", description="User ID"),
     usecase: AudioServiceUseCase = Depends(Provide[Container.audio_service]),
+    limit: int = Query(10, title="Maximum number of audio file names return", description="Maximum number of audio file names return"),
+    offset: int = Query(0, title="Number of audio files to skip", description="Number of audio files to skip from an audio list."), 
     dependencies=[Depends(PermissionDependency([IsAuthenticated]))]
 ):
-    audio_files = await usecase.list_audio_files(user_id = request.user.id)
+    audio_files = await usecase.list_audio_files(user_id = id, limit = limit, offset = skip)
     return AudioHelper.format_file_list(audio_files)
 
 @router.get("/users/{user_id}/audio",
@@ -100,12 +103,12 @@ async def list_my_audio(
 async def list_user_audio(
     request: Request,
     user_id: int = Path(..., title = "Used ID", description = "User ID of an user "),
-    limit: int = Query(30, title="Maximum number of audio file names return", description="Maximum number of audio file names return"),
-    skip: int = Query(0, title="Number of audio files to skip", description="Number of first audio files to skip. Only subsequent audio file names will be included in the final output."), 
+    page: int = Query(10, title="Page number", description="Audio search result page number to return"),
+    per_page: int = Query(0, title="Maximum audio fil es per page", description="Maximum audio files to return per one page."), 
     usecase: AudioServiceUseCase = Depends(Provide[Container.audio_service]),
     dependencies=[Depends(PermissionDependency([IsAuthenticated]))]
 ):
-    audio_files = await usecase.list_audio_files(user_id = user_id)
+    audio_files = await usecase.list_audio_files(user_id = user_id, page = page, per_page = per_page)
     return AudioHelper.format_file_list(audio_files)
 
 
@@ -119,8 +122,8 @@ async def list_user_audio(
 async def search_audio(
     request: Request,
     q: str = Query(..., title="Query string", description="Query string for search audio by name"),
-    page: int = Query(30, title="Page number", description="Audio search result page number to return"),
-    per_page: int = Query(0, title="Maximum audio files per page", description="Maximum audio files to return per one page."), 
+    page: int = Query(10, title="Page number", description="Audio search result page number to return"),
+    per_page: int = Query(0, title="Maximum audio fil es per page", description="Maximum audio files to return per one page."), 
     usecase: AudioServiceUseCase = Depends(Provide[Container.audio_service]),
 ):
     audio_files = await usecase.files_full_text_search(q, None, page = page, per_page = per_page)

@@ -5,6 +5,7 @@ from urllib3 import HTTPResponse
 
 from app.audio.domain.entity.audio_file import (
     AudioFile,
+    AudioFileCountedRead,
     AudioFileRead,
     UserAudioFile,
     UserRawUploadedFile,
@@ -66,17 +67,21 @@ class AudioRepositoryAdapter:
         )
 
     async def list_audio_files(
-        self, user_id: int | None = None, limit: int = 100
-    ) -> List[AudioFileRead]:
-        results = await self.audio_repo.list_audio_files(user_id, limit)
-        return [AudioFileRead.model_validate(result) for result in results]
+        self, user_id: int | None, limit, offset
+    ) -> AudioFileCountedRead:
+        results, total_records = await self.audio_repo.list_audio_files(user_id, limit=limit, offset=offset)
+        audio_files = [AudioFileRead.model_validate(result) for result in results]
+        return AudioFileCountedRead.create(
+            data=audio_files, 
+            offset=offset,
+            limit=limit,
+            total_records=total_records
+        )
 
     async def files_full_text_search(
-        self, query: str, user_id: int | None, page: int, per_page: int = 20
+        self, query: str, user_id: int | None, limit: int, offset: int
     ) -> List[AudioFileRead]:
-        if per_page > 20:
-            per_page = 20
-        results = await self.audio_repo.files_full_text_search(query, user_id, limit = per_page, offset = per_page * (page-1))
+        results = await self.audio_repo.files_full_text_search(query, user_id, limit = limit, offset=offset)
         return [AudioFileRead.model_validate(result) for result in results]
 
 
