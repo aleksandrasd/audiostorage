@@ -10,6 +10,7 @@ from app.audio.adapter.output.persistence.repository_adapter import (
 from app.audio.domain.command import ConvertAudioCommand, UploadAudioCommand
 from app.audio.domain.entity.audio_file import (
     AudioFile,
+    AudioFileCountedRead,
     AudioFileRead,
     UserAudioFile,
     UserRawUploadedFile,
@@ -70,12 +71,12 @@ class AudioService(AudioServiceUseCase):
 
     async def list_audio_files(
         self, user_id: int | None, page: int = 1, per_page = 10
-    ) -> List[AudioFileRead]:
+    ) -> AudioFileCountedRead:
         return await self.repository.list_audio_files(user_id, limit=per_page,  skip=per_page * (page-1))
 
     async def files_full_text_search(
         self, user_id: int | None, page: int, per_page = 20
-    ) -> List[AudioFileRead]:
+    ) -> AudioFileCountedRead:
         if per_page > 20:
             per_page = 20
         return await self.repository.files_full_text_search(user_id, limit = per_page, offset = per_page * (page-1))

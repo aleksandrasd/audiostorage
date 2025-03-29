@@ -22,7 +22,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from core.db import Base
-from core.pagination import Pagination
+from core.pagination import Pagination, PaginationMixin
 
 if typing.TYPE_CHECKING:
     from app.user.domain.entity.user import User
@@ -154,6 +154,9 @@ class AudioFileRead(UserRawUploadedFileFields, BaseModel):
     length_in_seconds: int = Field(..., title="Audio length in seconds")
     file_type: str = Field(..., title="Audio format")
 
-class AudioFileCountedRead(Pagination, BaseModel):
-    data: list[AudioFileRead]
+class AudioFileCountedRead(BaseModel):
+    audio_files: list[AudioFileRead]
+    total_records: int
+    limit: int
+    offset: int
 

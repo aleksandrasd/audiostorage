@@ -12,7 +12,7 @@ from fastapi.templating import Jinja2Templates
 
 
 from app.audio.adapter.input.api.v1.exception import AudioFileNotFound
-from app.audio.adapter.input.api.v1.response import UserAudioResponse
+from app.audio.adapter.input.api.v1.response import AudioFilesPaginationResponse, UserAudioResponse
 from app.audio.application.dto import AudioUploadResponseDTO
 from app.audio.domain.command import UploadAudioCommand
 from app.audio.domain.entity.audio_file import AudioFileRead
@@ -46,13 +46,13 @@ async def upload_audio(
         data=file.file,
         len=os.fstat(file.file.fileno()).st_size,
         name=file.filename,
-        user_id=request.user.id,
+        user_id=id,
     )
     upload_id = await usecase.upload_audio(upload_command)
     task = await asyncio.to_thread(
         celery_app.send_task,
         CONVERT_AUDIO,
-        kwargs={"user_id": request.user.id, "upload_id": upload_id},
+        kwargs={"user_id": id, "upload_id": upload_id},
     )
     return {"task_id": task.id}
 
@@ -88,28 +88,28 @@ async def list_my_audio(
     request: Request,
     id: str = Cookie(..., title = "User ID", description="User ID"),
     usecase: AudioServiceUseCase = Depends(Provide[Container.audio_service]),
-    limit: int = Query(10, title="Maximum number of audio file names return", description="Maximum number of audio file names return"),
-    offset: int = Query(0, title="Number of audio files to skip", description="Number of audio files to skip from an audio list."), 
+    page: int = Query(10, title="Page number", description="Audio search result page number to return"),
+    per_page: int = Query(0, title="Maximum audio files per page", description="Maximum audio files to return per one page."), 
     dependencies=[Depends(PermissionDependency([IsAuthenticated]))]
 ):
-    audio_files = await usecase.list_audio_files(user_id = id, limit = limit, offset = skip)
-    return AudioHelper.format_file_list(audio_files)
+    counted_audio_files = await usecase.list_audio_files(user_id = id, page = page, per_page = per_page) 
+    return AudioHelper.create_audio_files_pagination_response(counted_audio_files) 
 
-@router.get("/users/{user_id}/audio",
+@router.get("/user/{user_id}/audio",
     summary = "List specified user's audio",
     description="List specified user's audio",
-    response_model = list[UserAudioResponse])
+    response_model = AudioFilesPaginationResponse)
 @inject
 async def list_user_audio(
     request: Request,
-    user_id: int = Path(..., title = "Used ID", description = "User ID of an user "),
+    user_id: int = Path(..., title = "Used ID", description = "User ID of an user whose audios"),
     page: int = Query(10, title="Page number", description="Audio search result page number to return"),
-    per_page: int = Query(0, title="Maximum audio fil es per page", description="Maximum audio files to return per one page."), 
+    per_page: int = Query(0, title="Maximum audio files per page", description="Maximum audio files to return per one page."), 
     usecase: AudioServiceUseCase = Depends(Provide[Container.audio_service]),
     dependencies=[Depends(PermissionDependency([IsAuthenticated]))]
 ):
-    audio_files = await usecase.list_audio_files(user_id = user_id, page = page, per_page = per_page)
-    return AudioHelper.format_file_list(audio_files)
+    counted_audio_files = await usecase.list_audio_files(user_id = user_id, page = page, per_page = per_page) 
+    return AudioHelper.create_audio_files_pagination_response(counted_audio_files) 
 
 
 
@@ -117,7 +117,7 @@ async def list_user_audio(
 @router.get("/search",
     summary = "Search audio",
     description="Conduct full text search for an audio.",
-    response_model = list[UserAudioResponse])
+    response_model = AudioFilesPaginationResponse)
 @inject 
 async def search_audio(
     request: Request,
@@ -126,5 +126,5 @@ async def search_audio(
     per_page: int = Query(0, title="Maximum audio fil es per page", description="Maximum audio files to return per one page."), 
     usecase: AudioServiceUseCase = Depends(Provide[Container.audio_service]),
 ):
-    audio_files = await usecase.files_full_text_search(q, None, page = page, per_page = per_page)
-    return AudioHelper.format_file_list(audio_files)
+    counted_audio_files = await usecase.files_full_text_search(q, None, page = page, per_page = per_page)
+    return AudioHelper.create_audio_files_pagination_response(counted_audio_files) 

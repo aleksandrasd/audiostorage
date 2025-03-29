@@ -127,7 +127,7 @@ class AudioSQLAlchemyRepo(AudioRepo):
                 s
                 .order_by(desc(UserRawUploadedFile.created_at).desc(AudioFile.file_type))
                 .limit(limit)
-                .offset(skip)
+                .offset(offset)
             )
             result = await read_session.execute(s)
             return result.all(), total_count

@@ -1,7 +1,8 @@
 
 from collections import defaultdict
 import os
-from app.audio.domain.entity.audio_file import AudioFileRead
+from app.audio.adapter.input.api.v1.response import AudioFilesPaginationResponse
+from app.audio.domain.entity.audio_file import AudioFileCountedRead, AudioFileRead
 
 
 class AudioHelper:
@@ -17,3 +18,12 @@ class AudioHelper:
           grouped_files[str(file.created_at)].append(audio)
 
       return grouped_files
+    
+    @classmethod
+    def create_audio_files_pagination_response(cls, audio_files_counted: AudioFileCountedRead):
+      return  AudioFilesPaginationResponse.create(
+        data = AudioHelper.format_file_list(audio_files_counted.audio_files),
+        offset=audio_files_counted.offset,
+        limit=audio_files_counted.limit,
+        total_records=audio_files_counted.total_records
+    ) 
