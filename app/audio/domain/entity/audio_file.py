@@ -22,7 +22,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from core.db import Base
-from core.pagination import Pagination, PaginationMixin
 
 if typing.TYPE_CHECKING:
     from app.user.domain.entity.user import User

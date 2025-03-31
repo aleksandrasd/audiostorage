@@ -88,8 +88,8 @@ def create_app() -> FastAPI:
         description="""
 Audio Storage API
 
-With audio storage API upload any media type - automatically converts to audio - to the platform, search for audio among uploaded audios by others. 
-"""
+With audio storage API upload any media type to the platform - automatically converts to audio, search for audio. 
+""",
         version="1.0.0",
         docs_url=None if config.ENV == "production" else "/docs",
         redoc_url=None if config.ENV == "production" else "/redoc",

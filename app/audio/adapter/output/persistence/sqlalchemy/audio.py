@@ -134,7 +134,7 @@ class AudioSQLAlchemyRepo(AudioRepo):
 
     async def files_full_text_search(
         self, query: str, user_id: int | None, limit: int, offset: int
-    ) -> List[AudioFileRead]:
+    ) -> AudioFileCountedRead:
         async with session_factory() as read_session:
             # Construct the full-text search condition
             tsquery = func.websearch_to_tsquery("simple", query)
@@ -162,11 +162,11 @@ class AudioSQLAlchemyRepo(AudioRepo):
             if user_id:
                query = query.filter(UserAudioFile.user_id == user_id) 
 
-             query = (      
+            query = (
                  query         
                 .order_by(desc(UserRawUploadedFile.created_at),desc(AudioFile.file_type))
                 .limit(limit)
-                .offset(skip)
+                .offset(offset)
              )
 
             # Execute the query and return the results

@@ -12,10 +12,9 @@ from fastapi.templating import Jinja2Templates
 
 
 from app.audio.adapter.input.api.v1.exception import AudioFileNotFound
-from app.audio.adapter.input.api.v1.response import AudioFilesPaginationResponse, UserAudioResponse
+from app.audio.adapter.input.api.v1.response import AudioFilesPaginationResponse
 from app.audio.application.dto import AudioUploadResponseDTO
 from app.audio.domain.command import UploadAudioCommand
-from app.audio.domain.entity.audio_file import AudioFileRead
 from app.audio.domain.usecase.audio import AudioServiceUseCase
 from app.container import Container
 from celery_task import celery_app
@@ -59,15 +58,14 @@ async def upload_audio(
 
 @router.get("/download/{id}/{file_name}",
     summary = "Download audio",
-    description="Downloads audio",
-    response_model=FileResponse)
+    description="Downloads audio")
 @inject
 async def download_file(
     response: Response,
     id: str = Path(..., title = "File ID", description="The ID of the audio to be downloaded"),
     file_name: str = Path(..., title = "File name", description="The file name of the audio to be downloaded"),
     usecase: AudioServiceUseCase = Depends(Provide[Container.audio_service]),
-):
+) -> FileResponse:
     download_file_name = await usecase.get_download_file_name(id)
     if not download_file_name or download_file_name != file_name:
         raise AudioFileNotFound
@@ -82,7 +80,7 @@ async def download_file(
 @router.get("/me/audio",
     summary = "List user's uploaded audio",
     description="List user's uploaded audio.",
-    response_model=FileResponse)
+    response_model=AudioFilesPaginationResponse)
 @inject
 async def list_my_audio(
     request: Request,
