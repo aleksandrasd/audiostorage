@@ -26,15 +26,14 @@ class UserSQLAlchemyRepo(UserRepo):
 
         return result.scalars().all()
 
-    async def get_user_by_email_or_nickname(
+    async def get_user_by_nickname(
         self,
         *,
-        email: str,
         nickname: str,
     ) -> User | None:
         async with session_factory() as read_session:
             stmt = await read_session.execute(
-                select(User).where(or_(User.email == email, User.nickname == nickname)),
+                select(User).where(or_(User.nickname == nickname)),
             )
             return stmt.scalars().first()
 

@@ -39,6 +39,7 @@ async def create_user(
 ):
     command = CreateUserCommand(**request.model_dump())
     await usecase.create_user(command=command)
+    return command
 
 
 @user_router.post(

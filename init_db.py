@@ -29,11 +29,6 @@ async def create_tables():
     sql_file_path = "db.sql"  # Path to your SQL file
     with open(sql_file_path, "r") as file:
         sql_commands = file.read()
-
-    async with AsyncSessionLocal() as session:
-        result = await session.execute(text(sql_commands))
-        result = await session.execute(text("INSERT INTO public.user(password, email, nickname, is_admin, lat, lng, created_at, updated_at) VALUES('', '', '', false, 0, 0, NOW(), NOW()) ON CONFLICT (email) DO NOTHING;"))
-        await session.commit()
         
     await engine.dispose()
     
