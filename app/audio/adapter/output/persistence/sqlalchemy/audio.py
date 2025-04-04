@@ -16,6 +16,17 @@ from core.db.session import session, session_factory
 
 
 class AudioSQLAlchemyRepo(AudioRepo):      
+    async def get_file_extension_by_id(self, id: str) -> str:
+        async with session_factory() as read_session:
+            query = (
+                select(AudioFile.file_type)
+                .where(
+                    AudioFile.id == id,
+                )
+            )
+            result = await read_session.execute(query)
+            return result.scalars().first()
+
     async def get_file_name_by_id(self, id: str) -> str:
         async with session_factory() as read_session:
             query = (

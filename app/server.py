@@ -84,11 +84,14 @@ def init_cache() -> None:
 def create_app() -> FastAPI:
     app_ = FastAPI(
         title="Audio Storage",
-        summary="Audio Storage API",
+        summary="Audio Storage is a FastAPI application that lets users upload, store, and search for audio files. It accepts both audio and video uploads, automatically converting them into standard audio formats like WAV and MP3 before saving. Users can easily discover and access audio shared by others through built-in search functionality.",
         description="""
-Audio Storage API
+Audio Storage is a application that enables users to upload, store, and search for audio files shared by others. The platform supports uploading various media formats, including audio and video files, and automatically converts them into commonly used audio formats such as WAV and MP3 for standardized storage.
+Features:
 
-With audio storage API upload any media type to the platform - automatically converts to audio, search for audio. 
+* Upload Media: Supports both audio and video uploads, ensuring compatibility with various formats.
+* Automatic Conversion: Converts uploaded media to WAV and MP3 before storage.
+* Search Functionality: Allows users to find audio files stored by others based on metadata, tags, or content.
 """,
         version="1.0.0",
         docs_url=None if config.ENV == "production" else "/docs",

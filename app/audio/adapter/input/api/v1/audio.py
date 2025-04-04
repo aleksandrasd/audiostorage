@@ -29,7 +29,7 @@ router = APIRouter()
 @router.post(
     "/upload",
     summary = "Upload audio",
-    description="Uploads any media file and converts to appropriate audio formats.",
+    description="Stores audio files. Supports uploading audio and video file, converts to wav and mp3 before storing.",
     response_model=AudioUploadResponseDTO,
     dependencies=[Depends(PermissionDependency([IsAuthenticated]))],
     status_code=status.HTTP_202_ACCEPTED
@@ -37,7 +37,6 @@ router = APIRouter()
 @inject
 async def upload_audio(
     request: Request,
-    id: str = Cookie(..., title = "User ID", description="User ID"),
     file: UploadFile = File(..., title = "Media file", description="Takes any media file and uploads as an audio"),
     usecase: AudioServiceUseCase = Depends(Provide[Container.audio_service]),
 ):
@@ -45,13 +44,13 @@ async def upload_audio(
         data=file.file,
         len=os.fstat(file.file.fileno()).st_size,
         name=file.filename,
-        user_id=id,
+        user_id=request.user.id,
     )
     upload_id = await usecase.upload_audio(upload_command)
     task = await asyncio.to_thread(
         celery_app.send_task,
         CONVERT_AUDIO,
-        kwargs={"user_id": id, "upload_id": upload_id},
+        kwargs={"user_id": request.user.id, "upload_id": upload_id},
     )
     return {"task_id": task.id}
 
