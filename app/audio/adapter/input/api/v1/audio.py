@@ -50,19 +50,19 @@ async def upload_audio(
     task = await asyncio.to_thread(
         celery_app.send_task,
         CONVERT_AUDIO,
-        kwargs={"user_id": request.user.id, "upload_id": upload_id},
+        kwargs={"user_id": request.user.id  , "upload_id": upload_id},
     )
     return {"task_id": task.id}
 
 
 @router.get("/download/{id}/{file_name}",
     summary = "Download audio",
-    description="Downloads audio")
+    description="This API allows clients to download an audio file by specifying its unique id and associated file name.")
 @inject
 async def download_file(
     response: Response,
-    id: str = Path(..., title = "File ID", description="The ID of the audio to be downloaded"),
-    file_name: str = Path(..., title = "File name", description="The file name of the audio to be downloaded"),
+    id: str = Path(..., title = "File ID", description="Unique identifier of the audio file."),
+    file_name: str = Path(..., title = "File name", description="The exact name of the audio file, including extension (e.g., track01.mp3)."),
     usecase: AudioServiceUseCase = Depends(Provide[Container.audio_service]),
 ) -> FileResponse:
     download_file_name = await usecase.get_download_file_name(id)

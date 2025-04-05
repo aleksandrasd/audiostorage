@@ -38,7 +38,7 @@ class AudioService(AudioServiceUseCase):
             return None
         ext = await self.repository.get_file_extension_by_id(id)
         base_name, _ = os.path.splitext(original_file_name)
-        return f"{base_name}.{base_name}"
+        return f"{base_name}.{ext}"
     
     async def download_audio_file(self, id: str, output_path: str) -> None:
         file_name = await self.repository.get_file_name_by_id(id)

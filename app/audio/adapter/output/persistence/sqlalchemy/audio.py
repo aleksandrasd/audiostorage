@@ -42,7 +42,7 @@ class AudioSQLAlchemyRepo(AudioRepo):
         async with session_factory() as read_session:
             query = (
                 select(UserRawUploadedFile.original_file_name)
-                .join(UserRawUploadedFile,
+                .join(UserAudioFile,
                       UserAudioFile.upload_id == UserRawUploadedFile.id)
                 .where(
                     UserAudioFile.audio_file_id == id,
