@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AudioStorage</title>
+    <link href='styles.css' rel='stylesheet'> 
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script src="js/file_upload.js"></script>
+	<script src="js/search.js"></script>
+</head>
+<body>
+<header></header>
+<div id="list_audio_files"></div>
+<script src="js/header.js"></script>
+<script>
+const list_user_audio = fetchData('/list_user_audio')
+const generatedHTML = generateAudioList(list_user_audio);
+document.querySelector("#list_audio_files").innerHTML = generatedHTML;
+</script>
+</body>
+</html>

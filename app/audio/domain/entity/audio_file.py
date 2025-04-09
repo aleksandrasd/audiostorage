@@ -152,3 +152,10 @@ class AudioFileRead(UserRawUploadedFileFields, BaseModel):
     file_size_in_bytes: int = Field(..., title="File size")
     length_in_seconds: int = Field(..., title="Audio length in seconds")
     file_type: str = Field(..., title="Audio format")
+
+class AudioFileCountedRead(BaseModel):
+    audio_files: list[AudioFileRead]
+    total_records: int
+    limit: int
+    offset: int
+

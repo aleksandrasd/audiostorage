@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block body %}
+	    <ul>
+        {% for original_file_name, files in grouped_files.items() %}
+            <li>
+                {{ files[0]['base_name'] }}
+                {% for file in files %}
+                    [<a href="/download/{{ file['file_name']}}/{{ file['new_ext_name'] }}">{{ file['file_type'] }}</a>]
+                {% endfor %}
+            </li>
+        {% endfor %}
+    </ul>
+{% endblock %}

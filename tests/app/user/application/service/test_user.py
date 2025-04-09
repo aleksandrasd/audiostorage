@@ -75,7 +75,7 @@ async def test_create_user_duplicated():
         lat=37.123,
         lng=127.123,
     )
-    repository_mock.get_user_by_email_or_nickname.return_value = user
+    repository_mock.get_user_by_nickname.return_value = user
     user_service.repository = repository_mock
 
     # When, Then
@@ -94,7 +94,7 @@ async def test_create_user():
         lat=37.123,
         lng=127.123,
     )
-    repository_mock.get_user_by_email_or_nickname.return_value = None
+    repository_mock.get_user_by_nickname.return_value = None
     user_service.repository = repository_mock
 
     # When
@@ -164,7 +164,7 @@ async def test_is_admin():
 @pytest.mark.asyncio
 async def test_login_user_not_exist():
     # Given
-    repository_mock.get_user_by_email_and_password.return_value = None
+    repository_mock.get_user_by_nickname_and_password.return_value = None
     user_service.repository = repository_mock
 
     # When, Then
@@ -184,7 +184,7 @@ async def test_login():
         lat=37.123,
         lng=127.123,
     )
-    repository_mock.get_user_by_email_and_password.return_value = user
+    repository_mock.get_user_by_nickname_and_password.return_value = user
     user_service.repository = repository_mock
     token = TokenHelper.encode(payload={"user_id": user.id})
     refresh_token = TokenHelper.encode(payload={"sub": "refresh"})

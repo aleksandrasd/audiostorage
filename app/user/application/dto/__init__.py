@@ -15,7 +15,6 @@ class CreateUserRequestDTO(BaseModel):
 
 
 class CreateUserResponseDTO(BaseModel):
-    email: str = Field(..., description="Email")
     nickname: str = Field(..., description="Nickname")
 
 

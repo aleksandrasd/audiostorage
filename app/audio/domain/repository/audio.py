@@ -11,6 +11,18 @@ from app.audio.domain.entity.audio_file import (
 
 class AudioRepo(ABC):
     @abstractmethod
+    async def get_file_extension_by_id(self, id: str) -> str:
+        """get file extension by id"""
+
+    @abstractmethod
+    async def get_original_file_name_by_id(self, id: str) -> str | None:
+        """get original file name by id"""
+    
+    @abstractmethod
+    async def get_file_name_by_id(self, id: str) -> str:
+        """get file name by id"""
+      
+    @abstractmethod
     async def save_upload_audio_file_record(
         self, user_raw_uploaded_file: UserRawUploadedFile
     ) -> None:
@@ -47,20 +59,14 @@ class AudioRepo(ABC):
         """get_file_type_by_filenames"""
 
     @abstractmethod
-    async def files_full_text_search(self, query: str) -> List[AudioFileRead]:
+    async def files_full_text_search(self, query: str, user_id: int | None, limit: int, offset: int) -> tuple[list[AudioFileRead], int]:
         """files_full_text_search"""
 
     @abstractmethod
     async def list_audio_files(
-        self, user_id: int | None = None, limit: int = 100
-    ) -> List[AudioFileRead]:
+        self, user_id: int | None, limit: int, offset: int
+    ) -> tuple[list[AudioFileRead], int]:
         """list_audio_files"""
-
-    @abstractmethod
-    async def files_full_text_search(
-        self, query: str, limit: int = 100
-    ) -> List[AudioFileRead]:
-        """files_full_text_search"""
 
     @abstractmethod
     async def get_raw_file_name(self, id: int) -> str:

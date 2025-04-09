@@ -8,7 +8,7 @@ from app.user.application.exception import (
 from app.user.domain.command import CreateUserCommand
 from app.user.domain.entity.user import User, UserRead
 from app.user.domain.usecase.user import UserUseCase
-from app.user.domain.vo.location import Location
+from core.config import config
 from core.db import Transactional
 from core.helpers.token import TokenHelper
 
@@ -27,21 +27,15 @@ class UserService(UserUseCase):
 
     @Transactional()
     async def create_user(self, *, command: CreateUserCommand) -> None:
-        if command.password1 != command.password2:
-            raise PasswordDoesNotMatchException
-
-        is_exist = await self.repository.get_user_by_email_or_nickname(
-            email=command.email,
-            nickname=command.nickname,
+        is_exist = await self.repository.get_user_by_nickname(
+            nickname=command.nickname
         )
         if is_exist:
             raise DuplicateEmailOrNicknameException
 
         user = User.create(
-            email=command.email,
-            password=command.password1,
-            nickname=command.nickname,
-            location=Location(lat=command.lat, lng=command.lng),
+            password=command.password,
+            nickname=command.nickname
         )
         await self.repository.save(user=user)
 
@@ -55,16 +49,16 @@ class UserService(UserUseCase):
 
         return True
 
-    async def login(self, *, email: str, password: str) -> LoginResponseDTO:
-        user = await self.repository.get_user_by_email_and_password(
-            email=email,
+    async def login(self, *, nickname: str, password: str) -> LoginResponseDTO:
+        user = await self.repository.get_user_by_nickname_and_password(
+            nickname=nickname,
             password=password,
         )
         if not user:
             raise UserNotFoundException
 
         response = LoginResponseDTO(
-            token=TokenHelper.encode(payload={"user_id": user.id}),
-            refresh_token=TokenHelper.encode(payload={"sub": "refresh"}),
+            token=TokenHelper.encode(payload={"user_id": user.id}, expire_period=config.JWT_TOKEN_EXPIRE_PERIOD),
+            refresh_token=TokenHelper.encode(payload={"user_id": user.id}, expire_period=config.JWT_REFRESH_TOKEN_EXPIRE_PERIOD),
         )
         return response

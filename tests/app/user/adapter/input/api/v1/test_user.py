@@ -123,9 +123,8 @@ async def test_create_user(session: AsyncSession):
     assert response.json() == {"email": email, "nickname": nickname}
 
     user_repo = UserSQLAlchemyRepo()
-    sut = await user_repo.get_user_by_email_or_nickname(nickname=nickname, email=email)
+    sut = await user_repo.get_user_by_nickname(nickname=nickname, email=email)
     assert sut is not None
-    assert sut.email == email
     assert sut.nickname == nickname
 
 

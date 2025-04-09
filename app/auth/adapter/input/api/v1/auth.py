@@ -19,12 +19,14 @@ auth_router = APIRouter()
 @inject
 async def refresh_token(
     request: RefreshTokenRequest,
+    response: Response,
     usecase: JwtUseCase = Depends(Provide[Container.jwt_service]),
 ):
     token = await usecase.create_refresh_token(
         token=request.token, refresh_token=request.refresh_token
     )
-    return {"token": token.token, "refresh_token": token.refresh_token}
+    response.set_cookie("refresh_token", token.refresh_token, httponly=True)
+    response.set_cookie("token", token.token)
 
 
 @auth_router.post("/verify")

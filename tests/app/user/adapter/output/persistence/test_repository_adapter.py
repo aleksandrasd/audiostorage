@@ -43,23 +43,19 @@ async def test_get_users(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_get_user_by_email_or_nickname(session: AsyncSession):
+async def test_get_user_by_nickname(session: AsyncSession):
     # Given
     user = make_user(
         id=1,
         password="password",
-        email="a@b.c",
         nickname="hide",
-        is_admin=True,
-        lat=37.123,
-        lng=127.123,
+        is_admin=True
     )
-    user_repo_mock.get_user_by_email_or_nickname.return_value = user
+    user_repo_mock.get_user_by_nickname.return_value = user
     repository_adapter.user_repo = user_repo_mock
 
     # When
-    sut = await repository_adapter.get_user_by_email_or_nickname(
-        email=user.email,
+    sut = await repository_adapter.get_user_by_nickname(
         nickname=user.nickname,
     )
 
@@ -72,7 +68,7 @@ async def test_get_user_by_email_or_nickname(session: AsyncSession):
     assert sut.is_admin == user.is_admin
     assert sut.location.lat == user.location.lat
     assert sut.location.lng == user.location.lng
-    repository_adapter.user_repo.get_user_by_email_or_nickname.assert_awaited_once_with(
+    repository_adapter.user_repo.get_user_by_nickname.assert_awaited_once_with(
         email=user.email,
         nickname=user.nickname,
     )
@@ -111,7 +107,7 @@ async def test_get_user_by_id(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_get_user_by_email_and_password(session: AsyncSession):
+async def test_get_user_by_nickname_and_password(session: AsyncSession):
     # Given
     user = make_user(
         id=1,
@@ -122,11 +118,11 @@ async def test_get_user_by_email_and_password(session: AsyncSession):
         lat=37.123,
         lng=127.123,
     )
-    user_repo_mock.get_user_by_email_and_password.return_value = user
+    user_repo_mock.get_user_by_nickname_and_password.return_value = user
     repository_adapter.user_repo = user_repo_mock
 
     # When
-    sut = await repository_adapter.get_user_by_email_and_password(
+    sut = await repository_adapter.get_user_by_nickname_and_password(
         email=user.email, password=user.password
     )
 
@@ -139,8 +135,8 @@ async def test_get_user_by_email_and_password(session: AsyncSession):
     assert sut.is_admin == user.is_admin
     assert sut.location.lat == user.location.lat
     assert sut.location.lng == user.location.lng
-    repository_adapter.user_repo.get_user_by_email_and_password.assert_awaited_once_with(
-        email=user.email,
+    repository_adapter.user_repo.get_user_by_nickname_and_password.assert_awaited_once_with(
+        nickname=user.nickname,
         password=user.password,
     )
 

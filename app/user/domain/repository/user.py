@@ -14,10 +14,9 @@ class UserRepo(ABC):
         """Get user list"""
 
     @abstractmethod
-    async def get_user_by_email_or_nickname(
+    async def get_user_by_nickname(
         self,
         *,
-        email: str,
         nickname: str,
     ) -> User | None:
         """Get user by email or nickname"""
@@ -27,7 +26,7 @@ class UserRepo(ABC):
         """Get user by id"""
 
     @abstractmethod
-    async def get_user_by_email_and_password(
+    async def get_user_by_nickname_and_password(
         self,
         *,
         email: str,

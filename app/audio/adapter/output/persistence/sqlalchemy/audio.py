@@ -4,6 +4,7 @@ from sqlalchemy import desc, func, select
 
 from app.audio.domain.entity.audio_file import (
     AudioFile,
+    AudioFileCountedRead,
     AudioFileRead,
     Policy,
     UserAudioFile,
@@ -14,7 +15,42 @@ from app.user.domain.entity.user import User
 from core.db.session import session, session_factory
 
 
-class AudioSQLAlchemyRepo(AudioRepo):
+class AudioSQLAlchemyRepo(AudioRepo):      
+    async def get_file_extension_by_id(self, id: str) -> str:
+        async with session_factory() as read_session:
+            query = (
+                select(AudioFile.file_type)
+                .where(
+                    AudioFile.id == id,
+                )
+            )
+            result = await read_session.execute(query)
+            return result.scalars().first()
+
+    async def get_file_name_by_id(self, id: str) -> str:
+        async with session_factory() as read_session:
+            query = (
+                select(AudioFile.file_name)
+                .where(
+                    AudioFile.id == id,
+                )
+            )
+            result = await read_session.execute(query)
+            return result.scalars().first()
+    
+    async def get_original_file_name_by_id(self, id: str) -> str | None:
+        async with session_factory() as read_session:
+            query = (
+                select(UserRawUploadedFile.original_file_name)
+                .join(UserAudioFile,
+                      UserAudioFile.upload_id == UserRawUploadedFile.id)
+                .where(
+                    UserAudioFile.audio_file_id == id,
+                )
+            )
+            result = await read_session.execute(query)
+            return result.scalars().first()
+
     async def save_upload_audio_file_record(
         self, user_raw_uploaded_file: UserRawUploadedFile
     ) -> None:
@@ -77,8 +113,8 @@ class AudioSQLAlchemyRepo(AudioRepo):
             return result.scalars().first()
 
     async def list_audio_files(
-        self, user_id: int | None = None, limit: int = 100
-    ) -> List[AudioFileRead]:
+        self, user_id: int | None, limit: int, offset: int
+    ) -> tuple[AudioFileRead, int]:
         async with session_factory() as read_session:
             s = (
                 select(
@@ -97,13 +133,19 @@ class AudioSQLAlchemyRepo(AudioRepo):
             )
             if user_id:
                 s = s.where(UserAudioFile.user_id == user_id)
-            s = s.order_by(desc(UserRawUploadedFile.created_at),desc(AudioFile.file_type)).limit(limit)
+            total_count = s.count()
+            s = (
+                s
+                .order_by(desc(UserRawUploadedFile.created_at).desc(AudioFile.file_type))
+                .limit(limit)
+                .offset(offset)
+            )
             result = await read_session.execute(s)
-            return result.all()
+            return result.all(), total_count
 
     async def files_full_text_search(
-        self, query: str, limit: int = 100
-    ) -> List[AudioFileRead]:
+        self, query: str, user_id: int | None, limit: int, offset: int
+    ) -> AudioFileCountedRead:
         async with session_factory() as read_session:
             # Construct the full-text search condition
             tsquery = func.websearch_to_tsquery("simple", query)
@@ -127,9 +169,16 @@ class AudioSQLAlchemyRepo(AudioRepo):
                 .join(AudioFile, UserAudioFile.audio_file_id == AudioFile.id)
                 .join(User, UserAudioFile.user_id == User.id)
                 .filter(tsvector.op("@@")(tsquery))
+            )
+            if user_id:
+               query = query.filter(UserAudioFile.user_id == user_id) 
+
+            query = (
+                 query         
                 .order_by(desc(UserRawUploadedFile.created_at),desc(AudioFile.file_type))
                 .limit(limit)
-            )
+                .offset(offset)
+             )
 
             # Execute the query and return the results
             results = await read_session.execute(query)

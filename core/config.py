@@ -17,6 +17,8 @@ class Config(BaseSettings):
     ) = "postgresql+asyncpg://postgres:mysecretpassword@localhost:5432/postgres"
     JWT_SECRET_KEY: str = "fastapi"
     JWT_ALGORITHM: str = "HS256"
+    JWT_TOKEN_EXPIRE_PERIOD: int = 3600
+    JWT_REFRESH_TOKEN_EXPIRE_PERIOD: int = 3600
     SENTRY_SDN: str = ""
     CELERY_BROKER_URL: str = "redis://localhost:6379/0"
     CELERY_BACKEND_URL: (

@@ -53,23 +53,20 @@ async def test_get_users(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_get_user_by_email_or_nickname(session: AsyncSession):
+async def test_get_user_by_nickname(session: AsyncSession):
     # Given
     email = "a@b.c"
     nickname = "hide"
     user = make_user(
         password="password2",
-        email=email,
         nickname=nickname,
         is_admin=False,
-        lat=37.123,
-        lng=127.123,
     )
     session.add(user)
     await session.commit()
 
     # When
-    sut = await user_repo.get_user_by_email_or_nickname(email=email, nickname=nickname)
+    sut = await user_repo.get_user_by_nickname(email=email, nickname=nickname)
 
     # Then
     assert isinstance(sut, User)
@@ -91,7 +88,7 @@ async def test_get_user_by_id(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_get_user_by_email_and_password(session: AsyncSession):
+async def test_get_user_by_nickname_and_password(session: AsyncSession):
     # Given
     email = "b@c.d"
     password = "hide"
@@ -107,7 +104,7 @@ async def test_get_user_by_email_and_password(session: AsyncSession):
     await session.commit()
 
     # When
-    sut = await user_repo.get_user_by_email_and_password(email=email, password=password)
+    sut = await user_repo.get_user_by_nickname_and_password(email=email, password=password)
 
     # Then
     assert isinstance(sut, User)

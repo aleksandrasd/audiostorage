@@ -5,6 +5,7 @@ from urllib3 import HTTPResponse
 
 from app.audio.domain.entity.audio_file import (
     AudioFile,
+    AudioFileCountedRead,
     AudioFileRead,
     UserAudioFile,
     UserRawUploadedFile,
@@ -19,6 +20,15 @@ class AudioRepositoryAdapter:
     def __init__(self, *, audio_repo: AudioRepo):
         self.audio_repo = audio_repo
 
+    async def get_file_name_by_id(self, id: str) -> None:
+        return await self.audio_repo.get_file_name_by_id(id)
+    
+    async def get_original_file_name_by_id(self, id: str) -> str | None:
+        return await self.audio_repo.get_original_file_name_by_id(id)
+    
+    async def get_file_extension_by_id(self, id: str) -> None:
+        return await self.audio_repo.get_file_extension_by_id(id)
+    
     async def get_raw_file_name(self, id: int) -> str:
         return await self.audio_repo.get_raw_file_name(
             id
@@ -57,15 +67,15 @@ class AudioRepositoryAdapter:
         )
 
     async def list_audio_files(
-        self, user_id: int | None = None, limit: int = 100
-    ) -> List[AudioFileRead]:
-        results = await self.audio_repo.list_audio_files(user_id, limit)
-        return [AudioFileRead.model_validate(result) for result in results]
+        self, user_id: int | None, limit, offset
+    ) -> AudioFileCountedRead:
+        results, total_records = await self.audio_repo.list_audio_files(user_id, limit=limit, offset=offset)
+        return AudioFileCountedRead(audio_files=results, total_records = total_records, limit=limit, offset=offset)
 
     async def files_full_text_search(
-        self, query: str, limit: int = 100
+        self, query: str, user_id: int | None, limit: int, offset: int
     ) -> List[AudioFileRead]:
-        results = await self.audio_repo.files_full_text_search(query, limit)
+        results = await self.audio_repo.files_full_text_search(query, user_id, limit = limit, offset=offset)
         return [AudioFileRead.model_validate(result) for result in results]
 
 
