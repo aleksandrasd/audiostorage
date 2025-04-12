@@ -2,6 +2,7 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.middleware import Middleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.audio.adapter.input.api import router as audio_router
 from app.auth.adapter.input.api import router as auth_router
@@ -99,6 +100,7 @@ Features:
         dependencies=[Depends(Logging)],
         middleware=make_middleware(),
     )
+    app_.mount("/static", StaticFiles(directory="frontend/static"), name="static")
     init_routers(app_=app_)
     init_listeners(app_=app_)
     init_cache()
