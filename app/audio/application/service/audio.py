@@ -70,9 +70,9 @@ class AudioService(AudioServiceUseCase):
         return out_full_path
 
     async def list_audio_files(
-        self, user_id: int | None, page: int = 1, per_page = 10
+        self, user_id: int | None, page: int, per_page = 20
     ) -> AudioFileCountedRead:
-        return await self.repository.list_audio_files(user_id, limit=per_page,  skip=per_page * (page-1))
+        return await self.repository.list_audio_files(user_id, limit=per_page,  offset=per_page * (page-1))
 
     async def files_full_text_search(
         self, user_id: int | None, page: int, per_page = 20

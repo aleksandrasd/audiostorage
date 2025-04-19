@@ -118,13 +118,12 @@ class AudioSQLAlchemyRepo(AudioRepo):
         async with session_factory() as read_session:
             s = (
                 select(
-                    UserAudioFile.user_id,
                     UserRawUploadedFile.original_file_name,
+                    User.nickname,
                     AudioFile.file_name,
                     UserRawUploadedFile.created_at,
                     AudioFile.file_size_in_bytes,
                     AudioFile.length_in_seconds,
-                    User.nickname,
                     AudioFile.file_type,
                 )
                 .join(UserAudioFile, UserAudioFile.upload_id == UserRawUploadedFile.id)
@@ -133,10 +132,15 @@ class AudioSQLAlchemyRepo(AudioRepo):
             )
             if user_id:
                 s = s.where(UserAudioFile.user_id == user_id)
-            total_count = s.count()
+                # To get the count, create a separate count query
+            count_query = select(func.count()).select_from(s.subquery())
+            total_count = (await read_session.execute(count_query)).scalar()
             s = (
                 s
-                .order_by(desc(UserRawUploadedFile.created_at).desc(AudioFile.file_type))
+                .order_by(
+                    desc(UserRawUploadedFile.created_at),
+                    desc(AudioFile.file_type)
+                )
                 .limit(limit)
                 .offset(offset)
             )

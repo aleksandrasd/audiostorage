@@ -131,7 +131,6 @@ class Policy(Base):
 
 
 class UserRawUploadedFileFields(BaseModel):
-    user_id: int = Field(..., title="USER ID")
     original_file_name: str = Field(
         ..., title="Original file name (user's assigned name)"
     )
@@ -139,22 +138,16 @@ class UserRawUploadedFileFields(BaseModel):
     created_at: datetime.datetime = Field(..., title="Upload date")
 
 
-class UserRawUploadedFileRead(UserRawUploadedFileFields, BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int = Field(..., title="Audio raw file ID")
-
-
 class AudioFileRead(UserRawUploadedFileFields, BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    nickname: str = Field(..., title="User nickname")
+    nickname: str = Field(..., title="Uploader's nickname")
     file_size_in_bytes: int = Field(..., title="File size")
     length_in_seconds: int = Field(..., title="Audio length in seconds")
     file_type: str = Field(..., title="Audio format")
 
 class AudioFileCountedRead(BaseModel):
-    audio_files: list[AudioFileRead]
+    data: list[AudioFileRead]
     total_records: int
     limit: int
     offset: int
