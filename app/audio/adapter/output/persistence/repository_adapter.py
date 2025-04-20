@@ -72,11 +72,11 @@ class AudioRepositoryAdapter:
         results, total_records = await self.audio_repo.list_audio_files(user_id, limit=limit, offset=offset)
         return AudioFileCountedRead(data=results, total_records = total_records, limit=limit, offset=offset)
 
-    async def files_full_text_search(
+    async def search_audio_files(
         self, query: str, user_id: int | None, limit: int, offset: int
-    ) -> List[AudioFileRead]:
-        results = await self.audio_repo.files_full_text_search(query, user_id, limit = limit, offset=offset)
-        return [AudioFileRead.model_validate(result) for result in results]
+    ) -> AudioFileCountedRead:
+        results, total_records  = await self.audio_repo.search_audio_files(query, user_id, limit = limit, offset=offset)
+        return AudioFileCountedRead(data=results, total_records = total_records, limit=limit, offset=offset)
 
 
 class ConvertedAudioAdapterRepo:

@@ -27,14 +27,10 @@ class AudioServiceUseCase:
         """Convert audio"""
 
     @abstractmethod
-    async def list_audio(self, user_id: int) -> List[AudioFileRead]:
-        """Convert audio"""
-
-    @abstractmethod
-    async def files_full_text_search(
+    async def search_audio_files(
         self, user_id: int | None, page: int, per_page = 20
     ) -> AudioFileCountedRead:
-        """files_full_text_search"""
+        """search_audio_files"""
 
     @abstractmethod
     async def list_audio_files(

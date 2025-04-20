@@ -113,7 +113,8 @@ async def list_user_audio(
 @router.get("/search",
     summary = "Search audio",
     description="Conduct full text search for an audio.",
-    response_model = AudioFilesPaginationResponse)
+    response_model = AudioFilesPaginationResponse,
+    dependencies=[Depends(PermissionDependency([IsAuthenticated]))])
 @inject 
 async def search_audio(
     request: Request,
@@ -122,5 +123,5 @@ async def search_audio(
     per_page: int = Query(10, title="Maximum audio fil es per page", description="Maximum audio files to return per one page."), 
     usecase: AudioServiceUseCase = Depends(Provide[Container.audio_service]),
 ):
-    counted_audio_files = await usecase.files_full_text_search(q, None, page = page, per_page = per_page)
+    counted_audio_files = await usecase.search_audio_files(q, None, page = page, per_page = per_page)
     return AudioHelper.create_audio_files_pagination_response(counted_audio_files) 

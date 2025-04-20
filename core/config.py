@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings
 
 
 class Config(BaseSettings):
+    AUDIO_FORMATS: list[str] = ['wav', 'mp3']
     ENV: str = "development"
     DEBUG: bool = True
     APP_HOST: str = "0.0.0.0"

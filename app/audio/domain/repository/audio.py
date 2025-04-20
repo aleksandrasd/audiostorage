@@ -59,8 +59,8 @@ class AudioRepo(ABC):
         """get_file_type_by_filenames"""
 
     @abstractmethod
-    async def files_full_text_search(self, query: str, user_id: int | None, limit: int, offset: int) -> tuple[list[AudioFileRead], int]:
-        """files_full_text_search"""
+    async def search_audio_files(self, query: str, user_id: int | None, limit: int, offset: int) -> tuple[list[AudioFileRead], int]:
+        """search_audio_files"""
 
     @abstractmethod
     async def list_audio_files(

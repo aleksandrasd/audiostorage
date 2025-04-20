@@ -16,6 +16,7 @@ from app.audio.domain.entity.audio_file import (
     UserRawUploadedFile,
 )
 from app.audio.domain.usecase.audio import AudioServiceUseCase
+from core.config import config
 from core.audio_editor import AudioConverter
 from core.db.transactional import Transactional
 
@@ -46,9 +47,6 @@ class AudioService(AudioServiceUseCase):
             name=file_name, output_file_path=output_path
         )
 
-    async def list_audio(self, user_id: int) -> List[AudioFileRead]:
-        """Convert audio"""
-
     @Transactional()
     async def upload_audio(self, command: UploadAudioCommand) -> int:
         upload_name = str(uuid4())
@@ -72,18 +70,19 @@ class AudioService(AudioServiceUseCase):
     async def list_audio_files(
         self, user_id: int | None, page: int, per_page = 20
     ) -> AudioFileCountedRead:
+        if per_page > 20:
+            per_page = 20
         return await self.repository.list_audio_files(user_id, limit=per_page,  offset=per_page * (page-1))
 
-    async def files_full_text_search(
-        self, user_id: int | None, page: int, per_page = 20
+    async def search_audio_files(
+        self, query: str, user_id: int | None, page: int, per_page = 20
     ) -> AudioFileCountedRead:
         if per_page > 20:
             per_page = 20
-        return await self.repository.files_full_text_search(user_id, limit = per_page, offset = per_page * (page-1))
+        return await self.repository.search_audio_files(query, user_id, limit = per_page, offset = per_page * (page-1))
 
     @Transactional()
     async def convert_audio(self, command: ConvertAudioCommand) -> str:
-        download_audio_formats = ["wav", "mp3"]
         file_name = await self.repository.get_raw_file_name(
             command.user_id
         )
@@ -93,7 +92,7 @@ class AudioService(AudioServiceUseCase):
         length_in_seconds = int(self.converter.get_audio_duration(file_name))
         generated_files = [file_name]
         try:
-            for audio_format in download_audio_formats:
+            for audio_format in config.AUDIO_FORMATS:
                 fmt_file_name = await asyncio.to_thread(
                     self._do_audio_file_conversion,
                     file_name=file_name,
