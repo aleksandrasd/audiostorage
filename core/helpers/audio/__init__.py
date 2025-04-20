@@ -38,7 +38,7 @@ class AudioHelper:
               id=file.file_name,
               ext=file.file_type.lower(),
               file_type=file.file_type.upper(),
-              file_size_in_bytes=0  # Still assuming we don't have this info
+              file_size_in_bytes=file.file_size_in_bytes 
           )
           
           files_by_base_name[base_name]['audio_types'].append(audio_type)
