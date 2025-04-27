@@ -5,7 +5,6 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.audio.adapter.input.api import router as audio_router
-from app.auth.adapter.input.api import router as auth_router
 from app.container import Container
 from app.user.adapter.input.api import router as user_router
 from core.config import config
@@ -24,10 +23,8 @@ from core.web import frontend_router
 def init_routers(app_: FastAPI) -> None:
     container = Container()
     user_router.container = container
-    auth_router.container = container
     audio_router.container = container
     app_.include_router(user_router)
-    app_.include_router(auth_router)
     app_.include_router(audio_router)
     app_.include_router(frontend_router)
 
