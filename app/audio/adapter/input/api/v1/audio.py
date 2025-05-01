@@ -6,10 +6,7 @@ from typing import List
 
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Cookie, Depends, File, Path, Query, Request, Response, UploadFile
-from fastapi.responses import FileResponse, HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-
+from fastapi.responses import FileResponse
 
 from app.audio.adapter.input.api.v1.exception import AudioFileNotFound
 from app.audio.adapter.input.api.v1.response import AudioFilesPaginationResponse
@@ -57,7 +54,8 @@ async def upload_audio(
 
 @router.get("/download/{id}/{file_name}",
     summary = "Download audio",
-    description="This API allows clients to download an audio file by specifying its unique id and associated file name.")
+    description="This API allows clients to download an audio file by specifying its unique id and associated file name.",
+    dependencies=[Depends(PermissionDependency([IsAuthenticated]))])
 @inject
 async def download_file(
     response: Response,
@@ -91,7 +89,8 @@ async def list_my_audio(
     counted_audio_files = await usecase.list_audio_files(user_id = request.user.id, page = page, per_page = per_page) 
     return AudioHelper.create_audio_files_pagination_response(counted_audio_files) 
 
-@router.get("/user/{user_id}/audio",
+
+@router.get("/user/{nickname}/audio",
     summary = "List specified user's audio",
     description="List specified user's audio",
     response_model = AudioFilesPaginationResponse,
@@ -99,29 +98,40 @@ async def list_my_audio(
 @inject
 async def list_user_audio(
     request: Request,
-    user_id: int = Path(..., title = "Used ID", description = "User ID of an user whose audios"),
+    nickname: str = Path(..., title = "Nickname", description = "Nickname of an user whose audio files collection to return."),
     page: int = Query(1, title="Page number", description="Audio search result page number to return"),
     per_page: int = Query(10, title="Maximum audio files per page", description="Maximum audio files to return per one page."), 
     usecase: AudioServiceUseCase = Depends(Provide[Container.audio_service])
 ):
-    counted_audio_files = await usecase.list_audio_files(user_id = user_id, page = page, per_page = per_page) 
+    counted_audio_files = await usecase.list_audio_files_by_nickname(nickname = nickname, page = page, per_page = per_page) 
     return AudioHelper.create_audio_files_pagination_response(counted_audio_files) 
 
 
+@router.get("/user/{nickname}/audio",
+    summary = "List specified user's audio",
+    description="List specified user's audio",
+    response_model = AudioFilesPaginationResponse,
+    dependencies=[Depends(PermissionDependency([IsAuthenticated]))])
+@inject
+async def list_user_audio(
+    request: Request,
+    nickname: str = Path(..., title = "Nickname", description = "Nickname of an user whose audio files collection to return."),
+    page: int = Query(1, title="Page number", description="Audio search result page number to return"),
+    per_page: int = Query(10, title="Maximum audio files per page", description="Maximum audio files to return per one page."), 
+    usecase: AudioServiceUseCase = Depends(Provide[Container.audio_service])
+):
+    counted_audio_files = await usecase.list_audio_files_by_nickname(nickname = nickname, page = page, per_page = per_page) 
+    return AudioHelper.create_audio_files_pagination_response(counted_audio_files) 
 
-
-@router.get("/search",
-    summary = "Search audio",
-    description="Conduct full text search for an audio.",
+@router.get("/remove/{id}",
+    summary = "Remove audio file",
+    description="Remove uploaded audio file and converted audio files from system.",
     response_model = AudioFilesPaginationResponse,
     dependencies=[Depends(PermissionDependency([IsAuthenticated]))])
 @inject 
-async def search_audio(
+async def remove_audio(
     request: Request,
-    q: str = Query(..., title="Query string", description="Query string for search audio by name"),
-    page: int = Query(1, title="Page number", description="Audio search result page number to return"),
-    per_page: int = Query(10, title="Maximum audio fil es per page", description="Maximum audio files to return per one page."), 
+    id: str = Path(..., title = "Audio file id", description = "Id of uploaded audio file to be removed"),
     usecase: AudioServiceUseCase = Depends(Provide[Container.audio_service]),
 ):
-    counted_audio_files = await usecase.search_audio_files(q, None, page = page, per_page = per_page)
-    return AudioHelper.create_audio_files_pagination_response(counted_audio_files) 
+    counted_audio_files = await usecase.remove_audio(user_id = request.user.id, uploaded_audio_file_id =id)

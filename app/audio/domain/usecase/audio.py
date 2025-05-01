@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import List
 
-from app.audio.domain.command import ConvertAudioCommand, UploadAudioCommand
+from app.audio.domain.command import ConvertAudioCommand, RemoveAudioCommand, UploadAudioCommand
 from app.audio.domain.entity.audio_file import AudioFileCountedRead, AudioFileRead
 
 
@@ -20,11 +20,16 @@ class AudioServiceUseCase:
 
     @abstractmethod
     async def upload_audio(self, command: UploadAudioCommand) -> str:
-        """Upload audio"""
+        """Upload audio file"""
+
+    @abstractmethod
+    async def remove_audio(self, command: RemoveAudioCommand) -> None:
+        """Remove audio file"""
 
     @abstractmethod
     async def convert_audio(self, command: ConvertAudioCommand) -> str:
-        """Convert audio"""
+        """Convert audio file"""
+        
 
     @abstractmethod
     async def search_audio_files(
@@ -36,4 +41,10 @@ class AudioServiceUseCase:
     async def list_audio_files(
         self, user_id: int | None = None, page: int = 1, per_page = 10
     ) -> AudioFileCountedRead:
-        """list_audio_files"""
+        """List audio file collection"""
+
+    @abstractmethod
+    async def list_user_audio_files(
+        self, nickname: str | None = None, page: int = 1, per_page = 10
+    ) -> AudioFileCountedRead:
+        """List user's audio file collection"""

@@ -3,6 +3,8 @@ import os
 from typing import List
 from uuid import uuid4
 
+from app.audio.adapter.input.api.v1.exception import AudioFileNotFound
+from app.audio.adapter.output.persistence.exception import FileRemoveError
 from app.audio.adapter.output.persistence.repository_adapter import (
     AudioBinaryAdapterRepo,
     AudioRepositoryAdapter,
@@ -47,6 +49,12 @@ class AudioService(AudioServiceUseCase):
             name=file_name, output_file_path=output_path
         )
 
+    async def remove_audio_file(self, audio_file_id: str) -> None:
+        try:
+          self.repo_binary.remove_audio_file()
+        except FileRemoveError as e:
+            raise AudioFileNotFound
+
     @Transactional()
     async def upload_audio(self, command: UploadAudioCommand) -> int:
         upload_name = str(uuid4())
@@ -73,7 +81,14 @@ class AudioService(AudioServiceUseCase):
         if per_page > 20:
             per_page = 20
         return await self.repository.list_audio_files(user_id, limit=per_page,  offset=per_page * (page-1))
-
+    
+    async def list_user_audio_files(
+        self, nickname: str, page: int = 1, per_page = 10
+    ) -> AudioFileCountedRead:
+        if per_page > 20:
+            per_page = 20
+        return await self.repository.list_user_audio_files(nickname, limit=per_page,  offset=per_page * (page-1))
+  
     async def search_audio_files(
         self, query: str, user_id: int | None, page: int, per_page = 20
     ) -> AudioFileCountedRead:
@@ -83,8 +98,8 @@ class AudioService(AudioServiceUseCase):
 
     @Transactional()
     async def convert_audio(self, command: ConvertAudioCommand) -> str:
-        file_name = await self.repository.get_raw_file_name(
-            command.user_id
+        file_name = await self.repository.get_upload_file_name(
+            command.upload_id
         )
         await self.repo_binary.download_audio(
             name=file_name, output_file_path=file_name

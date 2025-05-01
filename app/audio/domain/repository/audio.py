@@ -53,12 +53,6 @@ class AudioRepo(ABC):
         """download_audio_id"""
 
     @abstractmethod
-    async def get_file_type_by_filenames(
-        self, filename: str, original_file_name: str
-    ) -> str | None:
-        """get_file_type_by_filenames"""
-
-    @abstractmethod
     async def search_audio_files(self, query: str, user_id: int | None, limit: int, offset: int) -> tuple[list[AudioFileRead], int]:
         """search_audio_files"""
 
@@ -69,5 +63,16 @@ class AudioRepo(ABC):
         """list_audio_files"""
 
     @abstractmethod
-    async def get_raw_file_name(self, id: int) -> str:
+    async def list_user_audio_files(
+        self, nickname: str | None = None, page: int = 1, per_page = 10
+    ) -> tuple[list[AudioFileRead], int]:
+        """list_user_audio_files"""
+        
+
+    @abstractmethod
+    async def get_upload_file_name(self, id: int) -> str | None:
         """Get raw file name"""
+
+    @abstractmethod
+    async def remove_audio_file(self, audio_file_id: str) -> None:
+        """Remove audio file"""

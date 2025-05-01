@@ -34,6 +34,7 @@ class Config(BaseSettings):
     MINIO_SECURE: bool = False
 
 
+
 class TestConfig(Config):
     ...
 

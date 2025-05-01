@@ -26,22 +26,23 @@ class AudioHelper:
       for file in audio_files:
           base_name = extract_base_name(file.original_file_name)
           
-          if base_name not in files_by_base_name:
-              files_by_base_name[base_name] = {
+          if file.audio_file_id not in files_by_base_name:
+              files_by_base_name[file.audio_file_id] = {
                   'base_name': base_name,
                   'nickname': file.nickname,
                   'length_in_seconds': file.length_in_seconds,
+                  'upload_file_name_id': file.audio_file_id,
                   'audio_types': []
               }
           
           audio_type = AudioType(
-              id=file.file_name,
+              id=file.id,
               ext=file.file_type.lower(),
               file_type=file.file_type.upper(),
               file_size_in_bytes=file.file_size_in_bytes 
           )
           
-          files_by_base_name[base_name]['audio_types'].append(audio_type)
+          files_by_base_name[file.audio_file_id]['audio_types'].append(audio_type)
       
       return [AudioFile(**file_data) for file_data in files_by_base_name.values()]
       

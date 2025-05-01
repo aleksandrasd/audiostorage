@@ -1,7 +1,7 @@
 import datetime
 import typing
 from sqlalchemy.dialects.postgresql import REGCONFIG
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator, validator
 from sqlalchemy import (
     ARRAY,
     UUID,
@@ -31,7 +31,9 @@ class UserRawUploadedFile(Base):
     __tablename__ = "user_raw_uploaded_file"
     __table_args__ = (Index("idx_user_raw_uploaded_file_created_at", "created_at"),)
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(
+        UUID(as_uuid=False), primary_key=True, server_default=func.gen_random_uuid()
+    )
     file_name: Mapped[str] = mapped_column(Text, nullable=False)
     original_file_name: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[DateTime] = mapped_column(
@@ -56,7 +58,7 @@ class AudioFile(Base):
     __tablename__ = "audio_file"
 
     id: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
+        UUID(as_uuid=False), primary_key=True, server_default=func.gen_random_uuid()
     )
     file_name: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
     file_type: Mapped[Enum] = mapped_column(Enum("mp3", "wav", name="audio_type"))
@@ -98,12 +100,12 @@ class UserAudioFile(Base):
         BigInteger, ForeignKey("user.id", ondelete="CASCADE"), primary_key=True
     )
     audio_file_id: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True),
+        UUID(as_uuid=False),
         ForeignKey("audio_file.id", ondelete="CASCADE"),
         primary_key=True,
     )
     upload_id: Mapped[int] = mapped_column(
-        BigInteger, ForeignKey("user_raw_uploaded_file.id")
+        BigInteger, ForeignKey("user_raw_uploaded_file.id", ondelete="CASCADE")
     )
 
     user: Mapped["User"] = relationship(back_populates="audio_files")
@@ -130,17 +132,15 @@ class Policy(Base):
     )
 
 
-class UserRawUploadedFileFields(BaseModel):
+class AudioFileRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     original_file_name: str = Field(
         ..., title="Original file name (user's assigned name)"
     )
-    file_name: str = Field(..., title="File name assigned after upload")
+    converted_audio_file_id: str = Field(..., title="Converted audio file name id")
+    audio_file_id: str = Field(..., title="Original uploaded file id")
     created_at: datetime.datetime = Field(..., title="Upload date")
-
-
-class AudioFileRead(UserRawUploadedFileFields, BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
     nickname: str = Field(..., title="Uploader's nickname")
     file_size_in_bytes: int = Field(..., title="File size")
     length_in_seconds: int = Field(..., title="Audio length in seconds")

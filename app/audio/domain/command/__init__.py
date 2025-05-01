@@ -10,11 +10,11 @@ class UploadAudioCommand(BaseModel):
     user_id: int
 
 
+class RemoveAudioCommand(BaseModel):
+    uploaded_audio_file_id: str
+    user_id: int
+
+
 class ConvertAudioCommand(BaseModel):
     user_id: int
     upload_id: int
-
-
-class RemoveAudioCommand(BaseModel):
-    audio_id: str
-    user_id: int

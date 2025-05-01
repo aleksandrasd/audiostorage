@@ -1,10 +1,9 @@
 from typing import List
 
-from sqlalchemy import desc, func, select
+from sqlalchemy import UUID, DateTime, Enum, Select, Tuple, desc, func, select
 
 from app.audio.domain.entity.audio_file import (
     AudioFile,
-    AudioFileCountedRead,
     AudioFileRead,
     Policy,
     UserAudioFile,
@@ -75,12 +74,16 @@ class AudioSQLAlchemyRepo(AudioRepo):
             result = await read_session.execute(select(Policy.upload_max_size_in_bytes))
             return result.scalars().first()
 
-
-    async def get_raw_file_name(self, id: int) -> str:
+    
+    async def get_upload_file_name(self, id: int, user_id: int | None = None) -> str:
         async with session_factory() as session:
-            query = select(UserRawUploadedFile.file_name).where(
-                UserRawUploadedFile.id == id
+            query = (
+                select(UserRawUploadedFile.file_name)
+                .join(User, UserAudioFile.user_id == User.id)
+                .where(UserRawUploadedFile.id == id)
             )
+            if user_id:
+              query = query.where(User.id == user_id)
             result = await session.execute(query)
             return result.scalar()
 
@@ -91,36 +94,19 @@ class AudioSQLAlchemyRepo(AudioRepo):
             )
             result = await session.execute(query)
             return result.scalar()
-
-    async def get_file_type_by_filenames(
-        filename: str, original_file_name: str
-    ) -> str | None:
+    
+    async def remove_audio_file(self, audio_file_id: str) -> None:
         async with session_factory() as read_session:
-            query = (
-                select(AudioFile.file_type)
-                .join(UserAudioFile, AudioFile.id == UserAudioFile.audio_file_id)
-                .join(
-                    UserRawUploadedFile,
-                    UserAudioFile.upload_id == UserRawUploadedFile.id,
-                )
-                .where(
-                    UserAudioFile.audio_file_id == AudioFile.id,
-                    UserRawUploadedFile.original_file_name == original_file_name,
-                    AudioFile.file_name == filename,
-                )
-            )
-            result = await read_session.execute(query)
-            return result.scalars().first()
+          file_to_delete = session.query(UserRawUploadedFile).get(audio_file_id)        
+        session.delete(file_to_delete) 
 
-    async def list_audio_files(
-        self, user_id: int | None, limit: int, offset: int
-    ) -> tuple[AudioFileRead, int]:
-        async with session_factory() as read_session:
-            s = (
+    def _get_audio_list_query() -> Select[Tuple[str, str, UUID, int, DateTime, int, int, Enum]]:
+      return (
                 select(
                     UserRawUploadedFile.original_file_name,
                     User.nickname,
-                    AudioFile.file_name,
+                    AudioFile.id.label("converted_audio_file_id"),
+                    UserRawUploadedFile.id.label("audio_file_id"),
                     UserRawUploadedFile.created_at,
                     AudioFile.file_size_in_bytes,
                     AudioFile.length_in_seconds,
@@ -130,22 +116,54 @@ class AudioSQLAlchemyRepo(AudioRepo):
                 .join(AudioFile, UserAudioFile.audio_file_id == AudioFile.id)
                 .join(User, UserAudioFile.user_id == User.id)
             )
+    
+    async def _get_total_count_for_audio_list(read_session, s):
+      count_query = select(func.count()).select_from(s.subquery())
+      total_count = (await read_session.execute(count_query)).scalar()
+      return total_count
+    
+    async def _get_ordered_audio_files_records(s, read_session, limit, offset):
+      s = (
+          s
+          .order_by(
+              desc(UserRawUploadedFile.created_at),
+              desc(AudioFile.file_type)
+          )
+          .limit(limit)
+          .offset(offset)
+      )
+      result = await read_session.execute(s)
+      return result.all()
+        
+        
+    async def list_user_audio_files(
+        self, nickname: str, limit: int, offset: int
+    ) -> tuple[AudioFileRead, int]:
+        async with session_factory() as read_session:
+            s = (
+                self._get_audio_list_query()
+                .where(User.nickname == nickname)
+            )
+            total_count = await self._get_total_count_for_audio_list(read_session, s)
+            audio_files = await self._get_ordered_audio_files_records(
+                s, read_session, limit, offset
+            )
+            return audio_files, total_count
+
+    async def list_audio_files(
+        self, user_id: int | None, limit: int, offset: int
+    ) -> tuple[AudioFileRead, int]:
+        async with session_factory() as read_session:
+            s = self._get_audio_list_query()
             if user_id:
                 s = s.where(UserAudioFile.user_id == user_id)
-            count_query = select(func.count()).select_from(s.subquery())
-            total_count = (await read_session.execute(count_query)).scalar()
-            s = (
-                s
-                .order_by(
-                    desc(UserRawUploadedFile.created_at),
-                    desc(AudioFile.file_type)
-                )
-                .limit(limit)
-                .offset(offset)
+            total_count = await self._get_total_count_for_audio_list(read_session, s)
+            audio_files = await self._get_ordered_audio_files_records(
+                s, read_session, limit, offset
             )
-            result = await read_session.execute(s)
-            return result.all(), total_count
-
+            return audio_files, total_count
+  
+    
     async def search_audio_files(
         self, query: str, user_id: int | None, limit: int, offset: int
     ) -> tuple[list[AudioFileRead], int]:
@@ -155,32 +173,13 @@ class AudioSQLAlchemyRepo(AudioRepo):
                 "simple", func.tokenize_filename(UserRawUploadedFile.original_file_name)
             )
             s = (
-                select(
-                    UserRawUploadedFile.original_file_name,
-                    User.nickname,
-                    AudioFile.file_name,
-                    UserRawUploadedFile.created_at,
-                    AudioFile.file_size_in_bytes,
-                    AudioFile.length_in_seconds,
-                    AudioFile.file_type,
-                )
-                .join(UserAudioFile, UserAudioFile.upload_id == UserRawUploadedFile.id)
-                .join(AudioFile, UserAudioFile.audio_file_id == AudioFile.id)
-                .join(User, UserAudioFile.user_id == User.id)
+                self._get_audio_list_query()
                 .filter(tsvector.op("@@")(tsquery))
             )
             if user_id:
                 s = s.where(UserAudioFile.user_id == user_id)
-            count_query = select(func.count()).select_from(s.subquery())
-            total_count = (await read_session.execute(count_query)).scalar()
-            s = (
-                s
-                .order_by(
-                    desc(UserRawUploadedFile.created_at),
-                    desc(AudioFile.file_type)
-                )
-                .limit(limit)
-                .offset(offset)
+            total_count = await self._get_total_count_for_audio_list(read_session, s)
+            audio_files = await self._get_ordered_audio_files_records(
+                s, read_session, limit, offset
             )
-            result = await read_session.execute(s)
-            return result.all(), total_count
+            return audio_files, total_count

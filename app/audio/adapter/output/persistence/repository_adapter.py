@@ -29,8 +29,8 @@ class AudioRepositoryAdapter:
     async def get_file_extension_by_id(self, id: str) -> None:
         return await self.audio_repo.get_file_extension_by_id(id)
     
-    async def get_raw_file_name(self, id: int) -> str:
-        return await self.audio_repo.get_raw_file_name(
+    async def get_upload_file_name(self, id: int) -> str:
+        return await self.audio_repo.get_upload_file_name(
             id
         )
       
@@ -69,22 +69,24 @@ class AudioRepositoryAdapter:
     async def list_audio_files(
         self, user_id: int | None, limit, offset
     ) -> AudioFileCountedRead:
-        results, total_records = await self.audio_repo.list_audio_files(user_id, limit=limit, offset=offset)
-        return AudioFileCountedRead(data=results, total_records = total_records, limit=limit, offset=offset)
+        audio_files, total_records = await self.audio_repo.list_audio_files(user_id, limit=limit, offset=offset)  
+        audio_file_reads = [AudioFileRead.model_validate(audio_file) for audio_file in audio_files]
+        return AudioFileCountedRead(data=audio_file_reads, total_records = total_records, limit=limit, offset=offset)
+    
+    async def list_user_audio_files(
+        self, nickname: str, limit, offset
+    ) -> AudioFileCountedRead:
+        audio_files, total_records = await self.audio_repo.list_user_audio_files(nickname, limit=limit, offset=offset)  
+        audio_file_reads = [AudioFileRead.model_validate(audio_file) for audio_file in audio_files]
+        return AudioFileCountedRead(data=audio_file_reads, total_records = total_records, limit=limit, offset=offset)
+
 
     async def search_audio_files(
         self, query: str, user_id: int | None, limit: int, offset: int
     ) -> AudioFileCountedRead:
-        results, total_records  = await self.audio_repo.search_audio_files(query, user_id, limit = limit, offset=offset)
-        return AudioFileCountedRead(data=results, total_records = total_records, limit=limit, offset=offset)
-
-
-class ConvertedAudioAdapterRepo:
-    def __init__(self, *, repo: ConvertedAudioRepo):
-        self.repo = repo
-
-    async def get_task_status(self, task_id: str) -> TaskState:
-        return await self.repo.audio_res_repo.get_task_status(task_id)
+        audio_files, total_records  = await self.audio_repo.search_audio_files(query, user_id, limit = limit, offset=offset)
+        audio_file_reads = [AudioFileRead.model_validate(audio_file) for audio_file in audio_files]
+        return AudioFileCountedRead(data=audio_file_reads, total_records = total_records, limit=limit, offset=offset)
 
 
 class AudioBinaryAdapterRepo:
@@ -104,3 +106,6 @@ class AudioBinaryAdapterRepo:
 
     async def get_audio(self, name) -> HTTPResponse:
         await self.repo.get_audio(name)
+
+    async def remove_audio_file(self, name: str) -> None:
+        await self.repo.remove_audio_file(name)
