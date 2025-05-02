@@ -8,10 +8,10 @@ from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Cookie, Depends, File, Path, Query, Request, Response, UploadFile
 from fastapi.responses import FileResponse
 
-from app.audio.adapter.input.api.v1.exception import AudioFileNotFound
 from app.audio.adapter.input.api.v1.response import AudioFilesPaginationResponse
 from app.audio.application.dto import AudioUploadResponseDTO
-from app.audio.domain.command import UploadAudioCommand
+from app.audio.application.exception import AudioFileNotFound
+from app.audio.domain.command import RemoveAudioCommand, UploadAudioCommand
 from app.audio.domain.usecase.audio import AudioServiceUseCase
 from app.container import Container
 from celery_task import celery_app

@@ -3,13 +3,13 @@ import os
 from typing import List
 from uuid import uuid4
 
-from app.audio.adapter.input.api.v1.exception import AudioFileNotFound
 from app.audio.adapter.output.persistence.exception import FileRemoveError
 from app.audio.adapter.output.persistence.repository_adapter import (
     AudioBinaryAdapterRepo,
     AudioRepositoryAdapter,
 )
-from app.audio.domain.command import ConvertAudioCommand, UploadAudioCommand
+from app.audio.application.exception import AudioFileNotFound
+from app.audio.domain.command import ConvertAudioCommand, RemoveAudioCommand, UploadAudioCommand
 from app.audio.domain.entity.audio_file import (
     AudioFile,
     AudioFileCountedRead,
