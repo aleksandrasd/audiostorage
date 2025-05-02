@@ -74,16 +74,23 @@ class AudioSQLAlchemyRepo(AudioRepo):
             result = await read_session.execute(select(Policy.upload_max_size_in_bytes))
             return result.scalars().first()
 
-    
-    async def get_upload_file_name(self, id: int, user_id: int | None = None) -> str:
+    async def get_user_upload_file_name(self, id: int, user_id: int) -> str | None:
         async with session_factory() as session:
             query = (
                 select(UserRawUploadedFile.file_name)
-                .join(User, UserAudioFile.user_id == User.id)
+                .join(UserAudioFile, UserAudioFile.upload_id == UserRawUploadedFile.id)
+                .where(UserRawUploadedFile.id == id)
+                .where(User.id == user_id)
+            )
+            result = await session.execute(query)
+            return result.scalar()
+            
+    async def get_upload_file_name(self, id: int) -> str | None:
+        async with session_factory() as session:
+            query = (
+                select(UserRawUploadedFile.file_name)
                 .where(UserRawUploadedFile.id == id)
             )
-            if user_id:
-              query = query.where(User.id == user_id)
             result = await session.execute(query)
             return result.scalar()
 

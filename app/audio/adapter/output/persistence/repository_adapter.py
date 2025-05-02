@@ -33,6 +33,12 @@ class AudioRepositoryAdapter:
         return await self.audio_repo.get_upload_file_name(
             id
         )
+    
+    async def get_user_upload_file_name(self, id: int, user_id: int) -> str | None:
+        return await self.audio_repo.get_user_upload_file_name(
+            id, user_id
+        )     
+
       
     async def save_upload_audio_file_record(
         self, user_raw_uploaded_file: UserRawUploadedFile
