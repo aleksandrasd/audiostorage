@@ -72,6 +72,9 @@ class AudioRepo(ABC):
     @abstractmethod
     async def get_upload_file_name(self, id: int) -> str | None:
         """Get raw file name"""
+    @abstractmethod
+    async def get_user_upload_file_name(self, id: int, user_id: int) -> str | None:
+        """Get raw file name"""    
 
     @abstractmethod
     async def remove_audio_file(self, audio_file_id: str) -> None:

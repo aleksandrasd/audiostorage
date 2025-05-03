@@ -17,4 +17,4 @@ class RemoveAudioCommand(BaseModel):
 
 class ConvertAudioCommand(BaseModel):
     user_id: int
-    upload_id: int
+    upload_id: str

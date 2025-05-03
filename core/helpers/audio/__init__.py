@@ -36,7 +36,7 @@ class AudioHelper:
               }
           
           audio_type = AudioType(
-              id=file.id,
+              id=file.converted_audio_file_id,
               ext=file.file_type.lower(),
               file_type=file.file_type.upper(),
               file_size_in_bytes=file.file_size_in_bytes 

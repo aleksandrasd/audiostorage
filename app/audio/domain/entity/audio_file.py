@@ -26,13 +26,12 @@ from core.db import Base
 if typing.TYPE_CHECKING:
     from app.user.domain.entity.user import User
 
-
 class UserRawUploadedFile(Base):
-    __tablename__ = "user_raw_uploaded_file"
-    __table_args__ = (Index("idx_user_raw_uploaded_file_created_at", "created_at"),)
+    __tablename__ = "upload"
+    __table_args__ = (Index("idx_upload_created_at", "created_at"),)
 
-    id: Mapped[int] = mapped_column(
-        UUID(as_uuid=False), primary_key=True, server_default=func.gen_random_uuid()
+    id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=False), primary_key=True, server_default=func.gen_random_uuid()
     )
     file_name: Mapped[str] = mapped_column(Text, nullable=False)
     original_file_name: Mapped[str] = mapped_column(Text, nullable=False)
@@ -41,7 +40,9 @@ class UserRawUploadedFile(Base):
     )
 
     audio_files: Mapped[list["UserAudioFile"]] = relationship(
-        back_populates="raw_audio_file_id"
+        back_populates="raw_audio_file",
+        cascade="all, delete-orphan",
+        passive_deletes=True
     )
 
     @classmethod
@@ -53,12 +54,11 @@ class UserRawUploadedFile(Base):
         )
 
 
-
 class AudioFile(Base):
     __tablename__ = "audio_file"
 
     id: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=False), primary_key=True, server_default=func.gen_random_uuid()
+        PG_UUID(as_uuid=False), primary_key=True, server_default=func.gen_random_uuid()
     )
     file_name: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
     file_type: Mapped[Enum] = mapped_column(Enum("mp3", "wav", name="audio_type"))
@@ -66,7 +66,9 @@ class AudioFile(Base):
     length_in_seconds: Mapped[int] = mapped_column(BigInteger)
 
     user_connections: Mapped[list["UserAudioFile"]] = relationship(
-        back_populates="audio_file"
+        back_populates="audio_file",
+        cascade="all, delete-orphan",
+        passive_deletes=True
     )
 
     @classmethod
@@ -97,29 +99,35 @@ class UserAudioFile(Base):
     )
 
     user_id: Mapped[int] = mapped_column(
-        BigInteger, ForeignKey("user.id", ondelete="CASCADE"), primary_key=True
+        BigInteger, 
+        ForeignKey("user.id", ondelete="CASCADE"), 
+        primary_key=True
     )
     audio_file_id: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=False),
+        PG_UUID(as_uuid=False),
         ForeignKey("audio_file.id", ondelete="CASCADE"),
         primary_key=True,
     )
-    upload_id: Mapped[int] = mapped_column(
-        BigInteger, ForeignKey("user_raw_uploaded_file.id", ondelete="CASCADE")
+    upload_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=False), 
+        ForeignKey("upload.id", ondelete="CASCADE"),
+        nullable=False
     )
 
     user: Mapped["User"] = relationship(back_populates="audio_files")
     audio_file: Mapped["AudioFile"] = relationship(back_populates="user_connections")
-    raw_audio_file_id: Mapped["UserRawUploadedFile"] = relationship(
+    raw_audio_file: Mapped["UserRawUploadedFile"] = relationship(
         back_populates="audio_files", foreign_keys=[upload_id]
     )
 
     @classmethod
     def create(
-        cls, *, user_id: int, audio_file_id: int, raw_audio_file_id: int
-    ) -> "AudioFile":
+        cls, *, user_id: int, audio_file_id: UUID, upload_id: UUID
+    ) -> "UserAudioFile":
         return cls(
-            user_id=user_id, audio_file_id=audio_file_id, upload_id=raw_audio_file_id
+            user_id=user_id, 
+            audio_file_id=audio_file_id, 
+            upload_id=upload_id
         )
 
 

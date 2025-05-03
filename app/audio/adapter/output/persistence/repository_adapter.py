@@ -12,7 +12,6 @@ from app.audio.domain.entity.audio_file import (
 )
 from app.audio.domain.repository.audio import AudioRepo
 from app.audio.domain.repository.audiobinary import AudioBinaryRepo
-from app.user.domain.repository.converted_audio import ConvertedAudioRepo
 from core.celery import TaskState
 
 
@@ -93,6 +92,9 @@ class AudioRepositoryAdapter:
         audio_files, total_records  = await self.audio_repo.search_audio_files(query, user_id, limit = limit, offset=offset)
         audio_file_reads = [AudioFileRead.model_validate(audio_file) for audio_file in audio_files]
         return AudioFileCountedRead(data=audio_file_reads, total_records = total_records, limit=limit, offset=offset)
+    
+    async def remove_audio_file(self, audio_file_id: str) -> None:
+        await self.audio_repo.remove_audio_file(audio_file_id)
 
 
 class AudioBinaryAdapterRepo:

@@ -23,7 +23,7 @@ class AudioServiceUseCase:
         """Upload audio file"""
 
     @abstractmethod
-    async def remove_audio(self, command: RemoveAudioCommand) -> None:
+    async def remove_audio_file(self, command: RemoveAudioCommand) -> None:
         """Remove audio file"""
 
     @abstractmethod
@@ -48,3 +48,7 @@ class AudioServiceUseCase:
         self, nickname: str | None = None, page: int = 1, per_page = 10
     ) -> AudioFileCountedRead:
         """List user's audio file collection"""
+
+    @abstractmethod
+    async def remove_file(command: RemoveAudioCommand) -> None:
+        """Remove audio file"""

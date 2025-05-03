@@ -80,7 +80,7 @@ class AudioSQLAlchemyRepo(AudioRepo):
                 select(UserRawUploadedFile.file_name)
                 .join(UserAudioFile, UserAudioFile.upload_id == UserRawUploadedFile.id)
                 .where(UserRawUploadedFile.id == id)
-                .where(User.id == user_id)
+                .where(UserAudioFile.user_id == user_id)
             )
             result = await session.execute(query)
             return result.scalar()
@@ -103,11 +103,13 @@ class AudioSQLAlchemyRepo(AudioRepo):
             return result.scalar()
     
     async def remove_audio_file(self, audio_file_id: str) -> None:
-        async with session_factory() as read_session:
-          file_to_delete = session.query(UserRawUploadedFile).get(audio_file_id)        
-        session.delete(file_to_delete) 
+      result = await session.execute(
+          select(UserRawUploadedFile).where(UserRawUploadedFile.id == audio_file_id)
+      )
+      file_to_delete = result.scalar()
+      await session.delete(file_to_delete)
 
-    def _get_audio_list_query() -> Select[Tuple[str, str, UUID, int, DateTime, int, int, Enum]]:
+    def _get_audio_list_query(self) -> Select:
       return (
                 select(
                     UserRawUploadedFile.original_file_name,
@@ -124,12 +126,12 @@ class AudioSQLAlchemyRepo(AudioRepo):
                 .join(User, UserAudioFile.user_id == User.id)
             )
     
-    async def _get_total_count_for_audio_list(read_session, s):
+    async def _get_total_count_for_audio_list(self, read_session, s):
       count_query = select(func.count()).select_from(s.subquery())
       total_count = (await read_session.execute(count_query)).scalar()
       return total_count
     
-    async def _get_ordered_audio_files_records(s, read_session, limit, offset):
+    async def _get_ordered_audio_files_records(self, read_session, s, limit, offset):
       s = (
           s
           .order_by(
@@ -153,7 +155,7 @@ class AudioSQLAlchemyRepo(AudioRepo):
             )
             total_count = await self._get_total_count_for_audio_list(read_session, s)
             audio_files = await self._get_ordered_audio_files_records(
-                s, read_session, limit, offset
+                read_session, s, limit, offset
             )
             return audio_files, total_count
 
@@ -166,7 +168,7 @@ class AudioSQLAlchemyRepo(AudioRepo):
                 s = s.where(UserAudioFile.user_id == user_id)
             total_count = await self._get_total_count_for_audio_list(read_session, s)
             audio_files = await self._get_ordered_audio_files_records(
-                s, read_session, limit, offset
+                read_session, s, limit, offset
             )
             return audio_files, total_count
   
@@ -187,6 +189,6 @@ class AudioSQLAlchemyRepo(AudioRepo):
                 s = s.where(UserAudioFile.user_id == user_id)
             total_count = await self._get_total_count_for_audio_list(read_session, s)
             audio_files = await self._get_ordered_audio_files_records(
-                s, read_session, limit, offset
+                read_session, s, limit, offset
             )
             return audio_files, total_count

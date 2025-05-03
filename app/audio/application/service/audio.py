@@ -49,11 +49,18 @@ class AudioService(AudioServiceUseCase):
             name=file_name, output_file_path=output_path
         )
 
-    async def remove_audio_file(self, audio_file_id: str) -> None:
+    @Transactional()
+    async def remove_audio_file(self, command: RemoveAudioCommand) -> None:
+        audio_file_id = command.uploaded_audio_file_id
+        user_id = command.user_id
+        file_name = await self.repository.get_user_upload_file_name(audio_file_id, user_id)
+        if not file_name:
+          raise AudioFileNotFound
+        await self.repository.remove_audio_file(audio_file_id)
         try:
-          self.repo_binary.remove_audio_file()
+          await self.repo_binary.remove_audio_file(file_name)
         except FileRemoveError as e:
-            raise AudioFileNotFound
+            pass
 
     @Transactional()
     async def upload_audio(self, command: UploadAudioCommand) -> int:
@@ -131,7 +138,7 @@ class AudioService(AudioServiceUseCase):
                 user_audio = UserAudioFile.create(
                     user_id=command.user_id,
                     audio_file_id=str(audio_file.id),
-                    raw_audio_file_id=command.upload_id,
+                    upload_id=command.upload_id,
                 )
                 await self.repository.save_user_audio_file(user_audio)
                 await self.repository.persist()

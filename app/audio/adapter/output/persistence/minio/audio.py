@@ -33,15 +33,16 @@ class AudioBinaryMinioRepo(AudioBinaryRepo):
         )
 
     async def remove_audio_file(self, name: str) -> None:
-      errors = await asyncio.to_thread(minio_client.remove_objects(
+      errors = await asyncio.to_thread(minio_client.remove_objects,
           config.BUCKET_NAME,
           [
-              DeleteObject(object_name=name)
+              DeleteObject(name)
           ]
-      ))
-      if len(errors) > 0:
-        raise FileRemoveError(errors)
-
+      )
+      e = [e.message for e in errors]
+      if len(e) > 0:
+        raise FileRemoveError(e)
+      
     async def get_audio(self, name: str) -> urllib3.HTTPResponse:
         return await asyncio.to_thread(
             minio_client.get_object,
