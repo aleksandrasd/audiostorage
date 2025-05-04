@@ -24,7 +24,7 @@ from fastapi import status
 router = APIRouter()
 
 @router.post(
-    "/upload",
+    "/audio/upload",
     summary = "Upload audio",
     description="Stores audio files. Supports uploading audio and video file, converts to wav and mp3 before storing.",
     response_model=AudioUploadResponseDTO,
@@ -52,8 +52,8 @@ async def upload_audio(
     return {"task_id": task.id}
 
 
-@router.get("/download/{id}/{file_name}",
-    summary = "Download audio",
+@router.get("/audio/{id}/download/{file_name}",
+    summary = "Download audio file",
     description="This API allows clients to download an audio file by specifying its unique id and associated file name.",
     dependencies=[Depends(PermissionDependency([IsAuthenticated]))])
 @inject
@@ -75,8 +75,8 @@ async def download_file(
 
 
 @router.get("/me/audio",
-    summary = "List user's uploaded audio",
-    description="List user's uploaded audio.",
+    summary = "List uploaded audio files",
+    description="List uploaded audio files.",
     response_model=AudioFilesPaginationResponse,
     dependencies=[Depends(PermissionDependency([IsAuthenticated]))])
 @inject
@@ -91,8 +91,8 @@ async def list_my_audio(
 
 
 @router.get("/user/{nickname}/audio",
-    summary = "List specified user's audio",
-    description="List specified user's audio",
+    summary = "Get user's audio file collection",
+    description="List specified user's personal audio file collection.",
     response_model = AudioFilesPaginationResponse,
     dependencies=[Depends(PermissionDependency([IsAuthenticated]))])
 @inject

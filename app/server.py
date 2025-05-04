@@ -89,7 +89,7 @@ Features:
 
 * Upload Media: Supports both audio and video uploads, ensuring compatibility with various formats.
 * Automatic Conversion: Converts uploaded media to WAV and MP3 before storage.
-* Search Functionality: Allows users to find audio files stored by others based on metadata, tags, or content.
+* Search Functionality: Allows users to find audio files stored by others based on file names.
 """,
         version="1.0.0",
         docs_url=None if config.ENV == "production" else "/docs",
