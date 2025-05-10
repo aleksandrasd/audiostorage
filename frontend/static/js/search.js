@@ -5,9 +5,12 @@ function handleSearch(event) {
 	}
 }
 
-function populateSearchFromURL() {
+function get_search_query(){
     const urlParams = new URLSearchParams(window.location.search);
-    const query = urlParams.get('q');
+    return urlParams.get('q');	
+}
+function populateSearchFromURL() {
+	query = get_search_query();
     if (query) {
         const searchInput = document.getElementById('search-input');
         searchInput.value = decodeURIComponent(query);

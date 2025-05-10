@@ -1,9 +1,8 @@
-// Function to fetch data from the server
 async function fetchData(url, options = {}) {
     try {
         const response = await fetch(url, {
             ...options,
-            credentials: 'include', // Include cookies for authentication
+            credentials: 'include',
         });
 
         if (!response.ok) {

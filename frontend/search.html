@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AudioStorage</title>
+    <link href='/static/css/styles.css' rel='stylesheet'> 
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script src="/static/js/fetch.js?1"></script>
+	<script src="/static/js/list_audio.js?1"></script>
+	<script src="/static/js/file_upload.js?1"></script>
+	<script src="/static/js/search.js"></script>
+	<script src="/static/js/pagination.js"></script>
+</head>
+<body>
+<header>
+.nav-links a {
+ font-weight: normal
+}
+</header>
+<div id="list_audio_files"></div>
+<div id="pagination"></div>
+<script src="/static/js/header.js"></script>
+<script>
+(async function () {
+    const search_query = get_search_query();
+	document.querySelector("#page_title").innerHTML = "Search Results"
+	var list_user_audio = await fetchData('/me/audio');
+	list_user_audio.endpoint = `/search?q=${search_query}`;
+	const generatedHTML = generateAudioList(list_user_audio);
+	document.querySelector("#list_audio_files").innerHTML = generatedHTML;
+	renderPagination(list_user_audio);	
+})();
+</script>
+</body>
+</html>

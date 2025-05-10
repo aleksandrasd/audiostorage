@@ -6,17 +6,47 @@
     <title>AudioStorage</title>
     <link href='/static/css/styles.css' rel='stylesheet'> 
 	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-	<script src="/static/js/file_upload.js"></script>
-	<script src="/static/js/search.js"></script>
+	<script src="/static/js/fetch.js?1"></script>
+	<script src="/static/js/list_audio.js?1"></script>
+	<script src="/static/js/file_upload.js?1"></script>
+	<script src="/static/js/user.js"></script>
+	<script src="/static/js/pagination.js"></script>
 </head>
 <body>
 <header></header>
+<h1 id="page_title"><h1>
 <div id="list_audio_files"></div>
+<div id="pagination"></div>
 <script src="/static/js/header.js"></script>
 <script>
-const list_user_audio = fetchData('/list_user_audio')
-const generatedHTML = generateAudioList(list_user_audio);
-document.querySelector("#list_audio_files").innerHTML = generatedHTML;
+(async function () {
+    const search_query = get_search_query();
+	const user_files = get_user_query();
+	
+	if (search_query) {
+		document.querySelector("#page_title").innerHTML = "Search Results"
+		var list_user_audio = await fetchData('/me/audio');
+		list_user_audio.endpoint = `/search?q=${search_query}`;
+		const generatedHTML = generateAudioList(list_user_audio);
+		document.querySelector("#list_audio_files").innerHTML = generatedHTML;
+		renderPagination(list_user_audio);
+	} else if (user_files) {
+		document.querySelector("#page_title").innerHTML = `${user_files}'s Audio Files Collection`
+		var list_user_audio = await fetchData('/me/audio');
+		list_user_audio.endpoint = `/search?q=${search_query}`;
+		const generatedHTML = generateAudioList(list_user_audio);
+		document.querySelector("#list_audio_files").innerHTML = generatedHTML;
+		renderPagination(list_user_audio);
+	} else {
+		document.querySelector("#page_title").innerHTML = "My Audio Files Collection"
+		var list_user_audio = await fetchData('/me/audio');
+		list_user_audio.endpoint = '/me/audio';
+		const generatedHTML = generateAudioList(list_user_audio);
+		document.querySelector("#list_audio_files").innerHTML = generatedHTML;
+		renderPagination(list_user_audio);
+	}
+})();
+
 </script>
 </body>
 </html>

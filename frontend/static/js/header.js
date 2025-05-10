@@ -2,7 +2,7 @@ function addHeaderContent() {
     // Create the HTML string
     const htmlString = `
     <div class="nav-links">
-        <a href="/list_user_audio">My Files</a>
+        <a href="/">My Files</a>
         <label for="file-upload" style="cursor: pointer;">Upload</label>
         <div class="search-box">
         </div>
