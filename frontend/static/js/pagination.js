@@ -13,13 +13,15 @@ function renderPagination({ endpoint, current_page, next_page, prev_page, total_
 
   const nav = document.createElement('div');
   nav.classList.add('pagination-controls');
-
+	
   const prevBtn = document.createElement('button');
   prevBtn.textContent = 'Previous';
   prevBtn.disabled = prev_page === null;
   if (prev_page !== null) {
     prevBtn.onclick = () => {
-      window.location.href = `${endpoint}?page=${prev_page}`;
+	  const params = endpoint.searchParams;
+	  params.append('page', prev_page);
+      window.location.href = urlObj.pathname + urlObj.search;
     };
   }
   nav.appendChild(prevBtn);
@@ -33,7 +35,9 @@ function renderPagination({ endpoint, current_page, next_page, prev_page, total_
   nextBtn.disabled = next_page === null;
   if (next_page !== null) {
     nextBtn.onclick = () => {
-      window.location.href = `${endpoint}?page=${next_page}`;
+	  const params = endpoint.searchParams;
+	  params.append('page', next_page);
+      window.location.href = urlObj.pathname + urlObj.search
     };
   }
   nav.appendChild(nextBtn);

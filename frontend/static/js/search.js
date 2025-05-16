@@ -9,6 +9,7 @@ function get_search_query(){
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get('q');	
 }
+
 function populateSearchFromURL() {
 	query = get_search_query();
     if (query) {

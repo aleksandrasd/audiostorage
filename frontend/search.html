@@ -7,10 +7,12 @@
     <link href='/static/css/styles.css' rel='stylesheet'> 
 	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 	<script src="/static/js/fetch.js?1"></script>
-	<script src="/static/js/list_audio.js?1"></script>
+	<script src="/static/js/list_audio.js?6"></script>
 	<script src="/static/js/file_upload.js?1"></script>
-	<script src="/static/js/search.js"></script>
-	<script src="/static/js/pagination.js"></script>
+	<script src="/static/js/search.js?1"></script>
+	<script src="/static/js/pagination.js?1"></script>
+	<script src="/static/js/user.js?5"></script>
+	
 </head>
 <body>
 <header>
@@ -18,16 +20,17 @@
  font-weight: normal
 }
 </header>
+<h1 id="page_title"></h1>
 <div id="list_audio_files"></div>
 <div id="pagination"></div>
-<script src="/static/js/header.js"></script>
+<script src="/static/js/header.js?1"></script>
 <script>
 (async function () {
     const search_query = get_search_query();
 	document.querySelector("#page_title").innerHTML = "Search Results"
-	var list_user_audio = await fetchData('/me/audio');
-	list_user_audio.endpoint = `/search?q=${search_query}`;
-	const generatedHTML = generateAudioList(list_user_audio);
+	var list_user_audio = await fetchData(`api/v1/audio/search?q=${search_query}`);
+	list_user_audio.endpoint = new URL(`api/v1/audio/search?q=${search_query}`, window.location.origin);
+	const generatedHTML = generateAudioList(list_user_audio, false, true);
 	document.querySelector("#list_audio_files").innerHTML = generatedHTML;
 	renderPagination(list_user_audio);	
 })();

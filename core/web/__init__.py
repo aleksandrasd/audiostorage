@@ -24,3 +24,16 @@ def read_root(request: Request):
     with open("frontend/list.html", "r") as file:
         html_content = file.read()
     return HTMLResponse(content=html_content)
+
+@frontend_router.get("/search", response_class=HTMLResponse)
+def read_root(request: Request):
+    with open("frontend/search.html", "r") as file:
+        html_content = file.read()
+    return HTMLResponse(content=html_content)
+
+
+@frontend_router.get("/user", response_class=HTMLResponse)
+def read_root(request: Request):
+    with open("frontend/user.html", "r") as file:
+        html_content = file.read()
+    return HTMLResponse(content=html_content)
