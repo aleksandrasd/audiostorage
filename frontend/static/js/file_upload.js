@@ -6,7 +6,7 @@ function handleFileUpload() {
     if (file) {
         const formData = new FormData();
         formData.append('file', file);
-        fetchData('/audio/upload', {
+        fetchData('/api/v1/audio/upload', {
             method: 'POST',
             body: formData,
         })
@@ -25,7 +25,6 @@ function handleFileUpload() {
             if (data) {  
                 console.log('File uploaded:', data);
                 const taskId = data.task_id;
-                //window.location.href = '/list_user_audio';
 				console.log(data);
             }
         })

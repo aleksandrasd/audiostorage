@@ -107,7 +107,7 @@ async def list_user_audio(
     return AudioHelper.create_audio_files_pagination_response(counted_audio_files) 
 
 
-@router.get("/audio/{id}/remove",
+@router.post("/audio/{id}/remove",
     summary = "Remove audio file",
     description="Remove uploaded audio file and its related converted audio files from system.",
     dependencies=[Depends(PermissionDependency([IsAuthenticated]))])

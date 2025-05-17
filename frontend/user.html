@@ -11,6 +11,7 @@
 	<script src="/static/js/file_upload.js"></script>
 	<script src="/static/js/search.js"></script>
 	<script src="/static/js/pagination.js"></script>
+	<script src="/static/js/search.js"></script>
 	<script src="/static/js/user.js"></script>
 <style>.nav-links a {
  font-weight: normal
@@ -26,13 +27,13 @@
 <script src="/static/js/header.js"></script>
 <script>
 (async function () {
-    const search_query = get_search_query();
-	document.querySelector("#page_title").innerHTML = "Search Results"
-	var list_user_audio = await fetchData(`api/v1/audio/search?q=${search_query}`);
-	list_user_audio.endpoint = new URL(`api/v1/audio/search?q=${search_query}`, window.location.origin);
-	const generatedHTML = generateAudioList(list_user_audio, false, true);
+	const user_files = get_user_query();
+	document.querySelector("#page_title").innerHTML = `${user_files}'s Audio Files Collection`
+	var list_user_audio = await fetchData(`/api/v1/user/${user_files}/audio`);
+	list_user_audio.endpoint = new URL(`/api/v1/user/${user_files}/audio`, window.location.origin);
+	const generatedHTML = generateAudioList(list_user_audio, add_remove_link = true);
 	document.querySelector("#list_audio_files").innerHTML = generatedHTML;
-	renderPagination(list_user_audio);	
+	renderPagination(list_user_audio);
 })();
 </script>
 </body>

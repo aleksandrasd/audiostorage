@@ -6,12 +6,12 @@
     <title>AudioStorage</title>
     <link href='/static/css/styles.css' rel='stylesheet'> 
 	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-	<script src="/static/js/fetch.js?1"></script>
-	<script src="/static/js/list_audio.js?1"></script>
-	<script src="/static/js/file_upload.js?1"></script>
-	<script src="/static/js/user.js?5"></script>
-	<script src="/static/js/pagination.js?"></script>
-	<script src="/static/js/search.js?"></script>
+	<script src="/static/js/fetch.js?3"></script>
+	<script src="/static/js/list_audio.js?3"></script>
+	<script src="/static/js/file_upload.js?3"></script>
+	<script src="/static/js/user.js?3"></script>
+	<script src="/static/js/pagination.js?3"></script>
+	<script src="/static/js/search.js?3"></script>
 	
 </head>
 <body>
@@ -25,7 +25,7 @@
     document.querySelector("#page_title").innerHTML = "My Audio Files Collection"
 	var list_user_audio = await fetchData('/api/v1/me/audio');
 	list_user_audio.endpoint = new URL('/api/v1/me/audio', window.location.origin);
-	const generatedHTML = generateAudioList(list_user_audio);
+	const generatedHTML = generateAudioList(list_user_audio, true);
 	document.querySelector("#list_audio_files").innerHTML = generatedHTML;
 	renderPagination(list_user_audio);
 })();
