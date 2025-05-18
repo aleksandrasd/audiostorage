@@ -30,11 +30,11 @@ class AuthBackend(AuthenticationBackend):
         
         cookies = SimpleCookie()
         cookies.load(conn.cookies)
-        refresh_token = cookies.get("refresh_token")
-        if not refresh_token:
+        token = cookies.get("token")
+        if not token:
           return False, current_user
         
-        user_id: str | None = TokenMiddlewareHelper.extract_user_id(refresh_token.value)
+        user_id: str | None = TokenMiddlewareHelper.extract_user_id(token.value)
 
         if not user_id:
             return False, current_user
@@ -83,17 +83,23 @@ class CustomMiddleware(BaseHTTPMiddleware):
         cookies = SimpleCookie()
         cookies.load(request.cookies)
 
-        if not cookies.get("token") or not cookies.get("refresh_token"):
+        if not cookies.get("token"):
             return response
     
         token: str | None = cookies.get("token").value
-        refresh_token: str | None = cookies.get("refresh_token").value
-        if not token or not refresh_token:
+        if not token:
             return response
 
         user_id: str | None = TokenMiddlewareHelper.extract_user_id(token) 
         if user_id:
            return response
+        
+        if not cookies.get("refresh_token"):
+            return response
+        
+        refresh_token: str | None = cookies.get("refresh_token").value
+        if not refresh_token:
+            return response
 
         token: str | None = self.create_token(refresh_token)
         if not token:
