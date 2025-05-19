@@ -15,12 +15,12 @@ class TestDbCoordinator:
         command.upgrade(alembic_cfg, "head")
 
     def truncate_all(self) -> None:
-        url = config.WRITER_DB_URL.replace("aiomysql", "pymysql")
+        url = config.WRITER_DB_URL.replace("asyncpg", "psycopg2")
         engine = create_engine(url=url)
         tables = self._get_all_tables(engine=engine)
         for table in tables:
             with engine.begin() as conn:
-                conn.execute(text(f"TRUNCATE TABLE {table}"))
+                conn.execute(text(f'TRUNCATE TABLE "{table}" CASCADE'))
 
     def _get_all_tables(self, *, engine: Engine) -> list[str]:
         inspector = inspect(engine)

@@ -12,7 +12,7 @@ from app.user.application.exception import (
 from tests.support.token import USER_ID_1_TOKEN
 from tests.support.user_fixture import make_user
 
-HEADERS = {"Authorization": f"Bearer {USER_ID_1_TOKEN}"}
+COOKIES = {"token": USER_ID_1_TOKEN}
 BASE_URL = "http://test"
 
 
@@ -22,23 +22,20 @@ async def test_get_users(session: AsyncSession):
     user = make_user(
         id=1,
         password="password",
-        email="a@b.c",
         nickname="hide",
-        is_admin=True,
-        lat=37.123,
-        lng=127.123,
+        is_admin=True
     )
     session.add(user)
     await session.commit()
 
     # When
     async with AsyncClient(app=app, base_url="http://test") as client:
-        response = await client.get("/api/v1/user", headers=HEADERS)
+        response = await client.get("/api/v1/user", cookies=COOKIES)
 
     # Then
     sut = response.json()
     assert len(sut) == 1
-    assert sut[0] == {"id": 1, "email": "a@b.c", "nickname": "hide"}
+    assert sut[0] == {"id": 1, "nickname": "hide"}
 
 
 @pytest.mark.asyncio
@@ -56,7 +53,7 @@ async def test_create_user_password_does_not_match(session: AsyncSession):
 
     # When
     async with AsyncClient(app=app, base_url="http://test") as client:
-        response = await client.post("/api/v1/user", headers=HEADERS, json=body)
+        response = await client.post("/api/v1/user", cookies=COOKIES, json=body)
 
     # Then
     assert response.json() == {
@@ -71,28 +68,21 @@ async def test_create_user_duplicated_user(session: AsyncSession):
     user = make_user(
         id=1,
         password="password",
-        email="a@b.c",
         nickname="hide",
-        is_admin=True,
-        lat=37.123,
-        lng=127.123,
+        is_admin=True
     )
     session.add(user)
     await session.commit()
 
     body = {
-        "email": "a@b.c",
-        "password1": "a",
-        "password2": "a",
-        "nickname": "hide",
-        "lat": 37.123,
-        "lng": 127.123,
+        "password": "a",
+        "nickname": "hide"
     }
     exc = DuplicateEmailOrNicknameException
 
     # When
     async with AsyncClient(app=app, base_url="http://test") as client:
-        response = await client.post("/api/v1/user", headers=HEADERS, json=body)
+        response = await client.post("/api/v1/user", cookies=COOKIES, json=body)
 
     # Then
     assert response.json() == {
@@ -117,7 +107,7 @@ async def test_create_user(session: AsyncSession):
 
     # When
     async with AsyncClient(app=app, base_url="http://test") as client:
-        response = await client.post("/api/v1/user", headers=HEADERS, json=body)
+        response = await client.post("/api/v1/user", cookies=COOKIES, json=body)
 
     # Then
     assert response.json() == {"email": email, "nickname": nickname}
@@ -138,7 +128,7 @@ async def test_login_user_not_found(session: AsyncSession):
 
     # When
     async with AsyncClient(app=app, base_url="http://test") as client:
-        response = await client.post("/api/v1/user/login", headers=HEADERS, json=body)
+        response = await client.post("/api/v1/user/login", cookies=COOKIES, json=body)
 
     # Then
     assert response.json() == {
@@ -168,7 +158,7 @@ async def test_login(session: AsyncSession):
 
     # When
     async with AsyncClient(app=app, base_url="http://test") as client:
-        response = await client.post("/api/v1/user/login", headers=HEADERS, json=body)
+        response = await client.post("/api/v1/user/login", cookies=COOKIES, json=body)
 
     # Then
     sut = response.json()
