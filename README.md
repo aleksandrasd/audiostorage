@@ -13,7 +13,7 @@ Hide API
 | POST | [/api/v1/user/login](#postapiv1userlogin) | Login |
 | POST | [/api/v1/auth/refresh](#postapiv1authrefresh) | Refresh Token |
 | POST | [/api/v1/auth/verify](#postapiv1authverify) | Verify Token |
-| POST | [/upload](#postupload) | Upload Audio |
+| POST | [/audio/upload](#postupload) | Upload Audio |
 | GET | [/download/{file_name}/{original_file_name}](#getdownloadfile_nameoriginal_file_name) | Download File |
 | GET | [/list_user_audio](#getlist_user_audio) | List User Audio |
 | GET | [/search](#getsearch) | Search Audio |
@@ -282,7 +282,7 @@ Verify Token
 
 ***
 
-### [POST]/upload
+### [POST]/audio/upload
 
 - Summary  
 Upload Audio

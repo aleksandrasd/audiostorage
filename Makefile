@@ -9,7 +9,14 @@ PGDATA=/var/lib/postgresql/data/pgdata
 MINIO_CONTAINER=minio
 REDIS_CONTAINER=redis
 
-.PHONY: build run stop dev_services_run dev_services_start dev_services_stop dev_services_remove logs 
+.PHONY: cov test build run stop dev_services_run dev_services_start dev_services_stop dev_services_remove logs 
+
+cov:
+	coverage run -m pytest
+	coverage html
+
+test:
+	ENV=test pytest tests -s
 
 build:
 	docker build --file $(DOCKERFILE) --tag $(IMAGE_NAME) .
