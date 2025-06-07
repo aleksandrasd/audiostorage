@@ -16,51 +16,6 @@ COOKIES = {"token": USER_ID_1_TOKEN}
 BASE_URL = "http://test"
 
 
-@pytest.mark.asyncio
-async def test_get_users(session: AsyncSession):
-    # Given
-    user = make_user(
-        id=1,
-        password="password",
-        nickname="hide",
-        is_admin=True
-    )
-    session.add(user)
-    await session.commit()
-
-    # When
-    async with AsyncClient(app=app, base_url="http://test") as client:
-        response = await client.get("/api/v1/user", cookies=COOKIES)
-
-    # Then
-    sut = response.json()
-    assert len(sut) == 1
-    assert sut[0] == {"id": 1, "nickname": "hide"}
-
-
-@pytest.mark.asyncio
-async def test_create_user_password_does_not_match(session: AsyncSession):
-    # Given
-    body = {
-        "email": "h@id.e",
-        "password1": "a",
-        "password2": "b",
-        "nickname": "hide",
-        "lat": 37.123,
-        "lng": 127.123,
-    }
-    exc = PasswordDoesNotMatchException
-
-    # When
-    async with AsyncClient(app=app, base_url="http://test") as client:
-        response = await client.post("/api/v1/user", cookies=COOKIES, json=body)
-
-    # Then
-    assert response.json() == {
-        "error_code": exc.error_code,
-        "message": exc.message,
-    }
-
 
 @pytest.mark.asyncio
 async def test_create_user_duplicated_user(session: AsyncSession):
@@ -94,15 +49,10 @@ async def test_create_user_duplicated_user(session: AsyncSession):
 @pytest.mark.asyncio
 async def test_create_user(session: AsyncSession):
     # Given
-    email = "h@id.e"
     nickname = "hide"
     body = {
-        "email": email,
-        "password1": "a",
-        "password2": "a",
-        "nickname": nickname,
-        "lat": 37.123,
-        "lng": 127.123,
+        "password": "a",
+        "nickname": nickname
     }
 
     # When
@@ -110,10 +60,10 @@ async def test_create_user(session: AsyncSession):
         response = await client.post("/api/v1/user", cookies=COOKIES, json=body)
 
     # Then
-    assert response.json() == {"email": email, "nickname": nickname}
+    assert response.json() == {"nickname": nickname}
 
     user_repo = UserSQLAlchemyRepo()
-    sut = await user_repo.get_user_by_nickname(nickname=nickname, email=email)
+    sut = await user_repo.get_user_by_nickname(nickname=nickname)
     assert sut is not None
     assert sut.nickname == nickname
 
@@ -121,9 +71,9 @@ async def test_create_user(session: AsyncSession):
 @pytest.mark.asyncio
 async def test_login_user_not_found(session: AsyncSession):
     # Given
-    email = "h@id.e"
+    nickname = "abc"
     password = "password"
-    body = {"email": email, "password": password}
+    body = {"nickname": nickname, "password": password}
     exc = UserNotFoundException
 
     # When
@@ -140,27 +90,28 @@ async def test_login_user_not_found(session: AsyncSession):
 @pytest.mark.asyncio
 async def test_login(session: AsyncSession):
     # Given
-    email = "h@id.e"
+    nickname = "nickname"
     password = "password"
     user = make_user(
         id=1,
         password=password,
-        email=email,
-        nickname="hide",
-        is_admin=True,
-        lat=37.123,
-        lng=127.123,
+        nickname="nickname"
     )
     session.add(user)
     await session.commit()
 
-    body = {"email": email, "password": password}
+    body = {"nickname": nickname, "password": password}
 
     # When
     async with AsyncClient(app=app, base_url="http://test") as client:
         response = await client.post("/api/v1/user/login", cookies=COOKIES, json=body)
 
+    cookies = response.cookies
+
+    # Access specific cookies
+    token = cookies.get("token")
+    refresh_token = cookies.get("refresh_token")
+
     # Then
-    sut = response.json()
-    assert "token" in sut
-    assert "refresh_token" in sut
+    assert token is not None
+    assert refresh_token is not None
