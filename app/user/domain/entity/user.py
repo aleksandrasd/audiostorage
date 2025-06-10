@@ -20,7 +20,7 @@ class User(Base, TimestampMixin):
     is_admin: Mapped[bool] = mapped_column(default=False)
 
     audio_files: Mapped[list["UserAudioFile"]] = relationship(
-        back_populates="user", cascade="all, delete-orphan"
+        "UserAudioFile", back_populates="user", cascade="all, delete-orphan"
     )
 
     @classmethod

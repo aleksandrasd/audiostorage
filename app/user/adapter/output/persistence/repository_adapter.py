@@ -6,15 +6,6 @@ class UserRepositoryAdapter:
     def __init__(self, *, user_repo: UserRepo):
         self.user_repo = user_repo
 
-    async def get_users(
-        self,
-        *,
-        limit: int = 12,
-        prev: int | None = None,
-    ) -> list[UserRead]:
-        users = await self.user_repo.get_users(limit=limit, prev=prev)
-        return [UserRead.model_validate(user) for user in users]
-
     async def get_user_by_nickname(
         self,
         *,

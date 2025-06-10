@@ -3,15 +3,7 @@ from abc import ABC, abstractmethod
 from app.user.domain.entity.user import User
 
 
-class UserRepo(ABC):
-    @abstractmethod
-    async def get_users(
-        self,
-        *,
-        limit: int = 12,
-        prev: int | None = None,
-    ) -> list[User]:
-        """Get user list"""
+class UserRepo(ABC):   
 
     @abstractmethod
     async def get_user_by_nickname(

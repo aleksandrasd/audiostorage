@@ -117,7 +117,7 @@ class UserAudioFile(Base):
     user: Mapped["User"] = relationship(back_populates="audio_files")
     audio_file: Mapped["AudioFile"] = relationship(back_populates="user_connections")
     raw_audio_file: Mapped["UserRawUploadedFile"] = relationship(
-        back_populates="audio_files", foreign_keys=[upload_id]
+        "UserRawUploadedFile", back_populates="audio_files", foreign_keys=[upload_id]
     )
 
     @classmethod

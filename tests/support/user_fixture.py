@@ -1,4 +1,5 @@
 from app.user.domain.entity.user import User
+import app.audio.domain.entity.audio_file
 
 
 def make_user(
