@@ -18,62 +18,18 @@ repository_mock = AsyncMock(spec=UserRepositoryAdapter)
 user_service = UserService(repository=repository_mock)
 
 
-@pytest.mark.asyncio
-async def test_get_user_list():
-    # Given
-    limit = 10
-    prev = 0
-    user = UserRead(id=1, email="h@id.e", nickname="hide")
-    repository_mock.get_users.return_value = [user]
-    user_service.repository = repository_mock
-
-    # When
-    sut = await user_service.get_user_list(limit=limit, prev=prev)
-
-    # Then
-    assert len(sut) == 1
-    result = sut[0]
-    assert result.id == user.id
-    assert result.email == user.email
-    assert result.nickname == user.nickname
-    user_service.repository.get_users.assert_awaited_once_with(limit=limit, prev=prev)
-
-
-@pytest.mark.asyncio
-async def test_create_user_password_does_not_match():
-    # Given
-    command = CreateUserCommand(
-        email="h@id.e",
-        password1="a",
-        password2="b",
-        nickname="hide",
-        lat=37.123,
-        lng=127.123,
-    )
-
-    # When, Then
-    with pytest.raises(PasswordDoesNotMatchException):
-        await user_service.create_user(command=command)
 
 
 @pytest.mark.asyncio
 async def test_create_user_duplicated():
     # Given
     command = CreateUserCommand(
-        email="h@id.e",
-        password1="a",
-        password2="a",
-        nickname="hide",
-        lat=37.123,
-        lng=127.123,
+        password="a",
+        nickname="hide"
     )
     user = make_user(
-        password="password",
-        email="h@id.e",
-        nickname="hide",
-        is_admin=False,
-        lat=37.123,
-        lng=127.123,
+        password="a",
+        nickname="hide"
     )
     repository_mock.get_user_by_nickname.return_value = user
     user_service.repository = repository_mock
@@ -87,12 +43,8 @@ async def test_create_user_duplicated():
 async def test_create_user():
     # Given
     command = CreateUserCommand(
-        email="h@id.e",
-        password1="a",
-        password2="a",
-        nickname="hide",
-        lat=37.123,
-        lng=127.123,
+        password="a",
+        nickname="hide"
     )
     repository_mock.get_user_by_nickname.return_value = None
     user_service.repository = repository_mock
@@ -123,11 +75,8 @@ async def test_is_admin_user_is_not_admin():
     user = make_user(
         id=1,
         password="password",
-        email="h@id.e",
         nickname="hide",
-        is_admin=False,
-        lat=37.123,
-        lng=127.123,
+        is_admin=False
     )
     repository_mock.get_user_by_id.return_value = user
     user_service.repository = repository_mock
@@ -145,11 +94,8 @@ async def test_is_admin():
     user = make_user(
         id=1,
         password="password",
-        email="h@id.e",
         nickname="hide",
-        is_admin=True,
-        lat=37.123,
-        lng=127.123,
+        is_admin=True
     )
     repository_mock.get_user_by_id.return_value = user
     user_service.repository = repository_mock
@@ -169,7 +115,7 @@ async def test_login_user_not_exist():
 
     # When, Then
     with pytest.raises(UserNotFoundException):
-        await user_service.login(email="email", password="password")
+        await user_service.login(nickname="nickname", password="password")
 
 
 @pytest.mark.asyncio
@@ -178,11 +124,8 @@ async def test_login():
     user = make_user(
         id=1,
         password="password",
-        email="h@id.e",
         nickname="hide",
-        is_admin=False,
-        lat=37.123,
-        lng=127.123,
+        is_admin=False
     )
     repository_mock.get_user_by_nickname_and_password.return_value = user
     user_service.repository = repository_mock
@@ -190,7 +133,7 @@ async def test_login():
     refresh_token = TokenHelper.encode(payload={"sub": "refresh"})
 
     # When
-    sut = await user_service.login(email="email", password="password")
+    sut = await user_service.login(nickname="hide", password="password")
 
     # Then
     assert sut.token == token
