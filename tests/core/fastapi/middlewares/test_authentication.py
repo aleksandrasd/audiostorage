@@ -1,4 +1,5 @@
 from http.client import HTTPConnection
+from http.cookies import SimpleCookie
 from unittest.mock import Mock, patch
 
 import pytest
@@ -6,6 +7,7 @@ from jwt.exceptions import PyJWTError
 
 from core.fastapi.middlewares import authentication
 from core.fastapi.middlewares.authentication import AuthBackend, CurrentUser
+from core.helpers.token import TokenHelper
 
 auth_backend = AuthBackend()
 
@@ -16,6 +18,7 @@ async def test_auth_backend_empty_header(jwt_mock):
     # Given
     conn_mock = Mock(spec=HTTPConnection)
     conn_mock.headers = {}
+    conn_mock.cookies = None
     jwt_mock.decode.return_value = {"user_id": 1}
 
     # When

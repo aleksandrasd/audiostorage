@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -16,7 +16,8 @@ from tests.support.user_fixture import make_user
 
 repository_mock = AsyncMock(spec=UserRepositoryAdapter)
 user_service = UserService(repository=repository_mock)
-
+import datetime as datetime_module
+import datetime
 
 
 
@@ -117,10 +118,16 @@ async def test_login_user_not_exist():
     with pytest.raises(UserNotFoundException):
         await user_service.login(nickname="nickname", password="password")
 
-
 @pytest.mark.asyncio
 async def test_login():
     # Given
+    
+    class MockFixedDateTime:
+        fixed_datetime = datetime.datetime.now()
+        @classmethod
+        def now(cls):
+            return cls.fixed_datetime
+        
     user = make_user(
         id=1,
         password="password",
@@ -129,11 +136,13 @@ async def test_login():
     )
     repository_mock.get_user_by_nickname_and_password.return_value = user
     user_service.repository = repository_mock
-    token = TokenHelper.encode(payload={"user_id": user.id})
-    refresh_token = TokenHelper.encode(payload={"sub": "refresh"})
+    with patch('datetime.datetime', MockFixedDateTime): 
+      token = TokenHelper.encode(payload={"user_id": user.id})
+      refresh_token = TokenHelper.encode(payload={"user_id": user.id})
 
     # When
-    sut = await user_service.login(nickname="hide", password="password")
+    with patch('datetime.datetime', MockFixedDateTime): 
+      sut = await user_service.login(nickname="hide", password="password")
 
     # Then
     assert sut.token == token
